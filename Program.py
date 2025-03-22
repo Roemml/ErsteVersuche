@@ -2,26 +2,23 @@
 import pygame
 
 #Eigene Imports
-import Global
-import Ship
-import BG
+import sprites
+
+#global vars
+
+shipHP = 500
+shipSpeed = 10
 
 # Initialisierungen
 pygame.init()
-screen = pygame.display.set_mode((Global.screenWidth, Global.screenHeight))
+screen = pygame.display.set_mode((sprites.SCREEN_WIDTH, sprites.SCREEN_HEIGHT))
+icon = pygame.image.load("Gameico.png")
+pygame.display.set_icon(icon)
 pygame.display.set_caption("2D Power")
-all_sprites = pygame.sprite.Group()
-#gameBG = BG.HintergrundFix()
-#all_sprites.add(gameBG)
-bg1 = BG.Hintergrund(1)
-bg2 = BG.Hintergrund(2)
-pShip = Ship.Ship()
-all_sprites.add((bg1, bg2))
-#all_sprites.add(bg2)
-all_sprites.add(pShip)
 
-bgc = (200, 200, 200)
-#grün = (0, 255, 0)
+#bg = (sprites.Hintergrund(1), sprites.Hintergrund(2))
+#pShip = sprites.Ship()
+sprites.init()
 
 # Spiel Schleife
 running = True
@@ -36,9 +33,8 @@ while running:
     if keys[pygame.K_ESCAPE] or (keys[pygame.K_LALT] and keys[pygame.K_q]):
         running = False
 
-    all_sprites.update()
-    #screen.fill(bgc)
-    all_sprites.draw(screen)
+    sprites.all_game_sprites.update()
+    sprites.all_game_sprites.draw(screen)
 
     # Kreis zeichnen
     #pygame.draw.rect(screen, grün, (pSchiffal.X-25, pSchiffal.Y-25, 50, 50))
