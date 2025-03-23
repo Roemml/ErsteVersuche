@@ -1,5 +1,6 @@
 #Python Imports
 import pygame
+import random
 
 # Globalle sprites Konstanzen
 SCREEN_WIDTH: int = 800 # Breite des Spiel Fensters
@@ -107,6 +108,9 @@ class Laser(pygame.sprite.Sprite):
     hp: int = 10  #Gesundheit des Lasers
     speed: int = 15 #Geschwindigkeit des Lasers
     def __init__(self,shiprect: pygame.Rect):
+        """
+        Initialisieren des lasers
+        """
         super().__init__()
         self.image = pygame.image.load("Laser1.png")
         self.image.set_colorkey((255, 255, 255))
@@ -125,8 +129,29 @@ class Enemy(pygame.sprite.Sprite):
     Hier werden alle Gegner instanziert
     """
     ENEMY_EINS: int = 0 # Erster Gegner
-    def __init__(self,element: int):
+    gegnertyp: int = None # Gegnertyp
+    image: pygame.Surface = None #Derr Gegner
+    rect: pygame.Rect = None #Rechteck kopierziel des Sprites
+    hp: int = None #Gesundheit des Gegners
+    temp_speed: int = None
+    def __init__(self,gegnertyp: int):
+        """
+        Initialisieren des Gegners
+        """
         super().__init__()
+        self.gegnertyp = gegnertyp
+        if self.gegnertyp == Enemy.ENEMY_EINS:
+            self.image = pygame.image.load("Enemy1.png")
+            self.image.set_colorkey((255, 255, 255))
+            self.rect = self.image.get_rect()
+            self.rect.topleft = (random.randint(0,SCREEN_WIDTH - self.rect.width), 0)
+            self.hp = 20
+            self.temp_speed = 3
+    def update(self):
+        self.rect.top += self.temp_speed
+        if self.rect.top > SCREEN_HEIGHT:
+            global all_game_sprites
+            all_game_sprites.remove(self)
 class UI_Element_Text(pygame.sprite.Sprite):
     """
     Hier werden alle UI Textelemente instanziert
@@ -151,3 +176,8 @@ def init():
     ship = Ship()
     all_game_sprites.add((hg,ship))
     all_hud_sprites.add(UI_Element_Text(Ship.UI_HP))
+def enemy_creation():
+    global all_game_sprites
+    generate_new_enemy = random.randint(0,1000)
+    if generate_new_enemy < 10:
+        all_game_sprites.add(Enemy(Enemy.ENEMY_EINS))

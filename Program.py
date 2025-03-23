@@ -3,7 +3,10 @@ import pygame
 
 #Eigene Imports
 import sprites
+import gui
 
+#Erst "Menü"
+gui.init_menu()
 # Initialisierungen
 #pygame
 pygame.init()
@@ -15,7 +18,7 @@ pygame.display.set_caption("2D Power")
 sprites.init()
 
 # Spiel Schleife
-running: bool = True # Spiel läuft noch?
+running: bool = gui.starten # Spiel läuft noch?
 while running:
     
     # Ereignis-Handling
@@ -26,7 +29,10 @@ while running:
     keys = pygame.key.get_pressed()
     if keys[pygame.K_ESCAPE] or (keys[pygame.K_LALT] and keys[pygame.K_q]): 
         running = False
+    if keys[pygame.K_p]:
+        gui.init_pause()
 
+    sprites.enemy_creation()
     # sprite updates
     sprites.all_game_sprites.update()
     sprites.all_hud_sprites.update()
