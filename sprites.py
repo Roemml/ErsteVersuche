@@ -1,90 +1,89 @@
+#Python Imports
 import pygame
 
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
+# Globalle sprites Konstanzen
+SCREEN_WIDTH: int = 800 # Breite des Spiel Fensters
+SCREEN_HEIGHT: int = 600 # Höhe des Spiel Fensters
 
-all_game_sprites = pygame.sprite.Group()
+
+# globale sprites Variablen
+all_game_sprites: pygame.sprite.Group = pygame.sprite.Group() # Alle Sprites des Spiels selbst
+all_hud_sprites: pygame.sprite.Group = pygame.sprite.Group() # Alle Sprites für das HUD
+
+hg: pygame.Surface = None # Hintergrund
+ship: pygame.Surface = None # Schiff Sprite
+
 
 class Hintergrund(pygame.sprite.Sprite):
     """
-    Der Hintergrund bzw doppelt Hintergrund 1 und zwei wenn scrollend
-    
-    Variablen:
-    image - Hintergrundbild selbst
-    rect - Rechteck wo der Hintergrund gezeichnet werden soll
-    einsOderZwei - 0 wenn fixer Hintergrund, ansonsten 1 und 2 für die beiden Hintergründe zum scrollen
-    Variablen bei einsOderZwei != 0:
-    height - die Höhe des Sprites
-    speed - Scrollspeed
+    Der Hintergrund des Spiels
     """
-    #init für einen fixen Sprite
-    def __init__(self): 
+    # Konstanten
+    SCROLL_NO: int = 0 # Der Hintergrund ist statisch
+    SCROLL_DOWN: int = 1 # Her Hintergrund scrollt nach unten, man bewegt sich nach oben
+    SCROLL_SPEED: int = 15 # Scrollgeschwindigkeit
+    # Variablen
+    image: pygame.Surface = None #Das Hintergrundbild
+    rect: pygame.Rect = None #Rechteck kopierziel des Sprites
+    scrolling: int = None #Art des Scrolling
+    scrolled: int = None #Counter wie weit schon gescrollt wurde
+    image_unscrolled: pygame.Surface = None #Kopie des Original Images
+    def __init__(self,bg_scroll=SCROLL_NO):
+        """
+        Konstruktor des Hintergrunds
+        """
         super().__init__()
+        if not isinstance(bg_scroll, int):
+            raise ValueError("bg_scroll muss ein Integer sein!")
         self.image = pygame.image.load("HGTest.png")
         self.rect = self.image.get_rect()
         self.rect.topleft = (0, 0)
-        self.einsOderZwei = 0
-
-    #Scroll Hintergrund muss zwei mal erzeigt werden damit es mit der Methode klappt    
-    def __init__(self,einsOderZwei):
-        super().__init__()
-        if einsOderZwei != 1 and einsOderZwei != 2:
-            raise ValueError("einsOderZwei darf auch nur eins oder zwei sein!")
-        self.einsOderZwei = einsOderZwei
-        self.image = pygame.image.load("HGTest.png")
-        self.height = self.image.get_height()
-        self.speed = 15
-        if einsOderZwei == 1:
-            self.rect = (0,-self.height)
-        else:
-            self.rect = (0,0)
+        self.scrolling = bg_scroll
+        # Attribute, die nur für scrollende Hintergründe benötigt werden
+        if not self.scrolling == Hintergrund.SCROLL_NO:
+            self.scrolled = 0
+            self.image_unscrolled =self.image.copy()
+            self.rect.top =-(self.image.get_height() - SCREEN_HEIGHT)
     
     def update(self):
-        if self.einsOderZwei != 0:
-            # Hintergrund verschieben
-            # liste = list(self.rect)
-            # liste[1] = liste[1] + self.speed
-
-            # # Wenn das Ende des Hintergrunds erreicht ist, beginne wieder von vorne
-            # if self.einsOderZwei == 1 and liste[1] >= 0:
-            #     liste[1] = -self.height
-            # if self.einsOderZwei == 2 and liste[1] >= self.height:
-            #     liste[1] = 0
-            # self.rect = tuple(liste)
-            x, y = self.rect
-            y += self.speed
-            if self.einsOderZwei == 1 and y >= 0:
-                 y = -self.height
-            if self.einsOderZwei == 2 and y >= self.height:
-                y = 0
-            self.rect = (x, y)
+        """
+        Updatemethode für Handling über eine Sprite Gruppe
+        """
+        if self.scrolling == Hintergrund.SCROLL_DOWN:
+            self.image.scroll(dy=Hintergrund.SCROLL_SPEED)
+            self.scrolled += Hintergrund.SCROLL_SPEED
+            # Wenn der Hintergrund am Ende angelangt ist, muss er wieder neu gesetzt werden, hier aus der Kopie des Original Images
+            if self.scrolled >= self.image.get_height() - SCREEN_HEIGHT:
+                self.image = self.image_unscrolled.copy()
+                self.scrolled = 0
 
 class Ship(pygame.sprite.Sprite):
     """
     Dies ist ein Schiff
-
-    Variablen:
-    iamge - Bild wie das Schiff ausschaut
-    rect - Rechteck wo das Schiff gezeichnet werden soll
-    HP - Gesundheit
-    speed - Bewegungsgeschwindigkeit
     """
+    #Konstanten
+    UI_HP = 0  #Konstante für UI Element Index
+    # Variablen
+    image: pygame.Surface = None #Das Hintergrundbild
+    rect: pygame.Rect = None #Rechteck kopierziel des Sprites
+    hp: int = 500 #Gesundheit des Schiffs
+    speed: int = 10 #Geschwindigkeit des Schiffs
+    shot_cooldown: int = 0 #Cooldown Timer für Schüsse
+
     def __init__(self):
+        """
+        Initialisieren des Schiffs, image und rect setzen
+        """
         super().__init__()
         self.image = pygame.image.load("ship.png")
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect()
         self.rect.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT - (self.rect.height * 2))
-        self.HP = 500
-        self.speed = 10
-        self.shot_cooldown = 0
 
-        global all_game_sprites
-        #all_sprites.add(self)
         
 
     def update(self):
-        # Hier könnte die Bewegung oder andere Logik erfolgen
+        # Tastenaktionen
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             if self.rect.x > self.speed:
@@ -103,8 +102,6 @@ class Ship(pygame.sprite.Sprite):
                 global all_game_sprites
                 all_game_sprites.add(Laser(self.rect))
                 self.shot_cooldown = 5
-            #else:
-             #   print("Pause")
 
         if self.shot_cooldown > 0:
             self.shot_cooldown -=1
@@ -125,7 +122,7 @@ class Laser(pygame.sprite.Sprite):
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect()
         self.rect.bottomleft = (shiprect.left, shiprect.top + 1)
-        self.HP = 10
+        self.hp = 10
         self.speed = 15
 
     def update(self):
@@ -140,6 +137,30 @@ class Laser(pygame.sprite.Sprite):
                global all_game_sprites
                all_game_sprites.remove(self)
 
+class UI_Element_Text(pygame.sprite.Sprite):
+    """
+    Hier werden alle UI Textelemente instanziert
+    """
+    def __init__(self,element: int):
+        super().__init__()
+        self.element = element
+    
+    def update(self):
+        global ship
+        font = pygame.font.Font(None,20)
+        self.image = font.render(f"HP: {ship.hp}",0,(255,255,255),None)
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (0, 0)
+
+class Enemy(pygame.sprite.Sprite):
+    ENEMY_EINS: int = 0 # Erster Gegner
+    def __init__(self,element: int):
+        super().__init__()
+
+
 def init():
-    global all_game_sprites
-    all_game_sprites.add((Hintergrund(1), Hintergrund(2), Ship()))
+    global all_game_sprites, all_hud_sprites,ship, hg
+    hg = Hintergrund(Hintergrund.SCROLL_DOWN)
+    ship = Ship()
+    all_game_sprites.add((hg,ship))
+    all_hud_sprites.add(UI_Element_Text(Ship.UI_HP))
