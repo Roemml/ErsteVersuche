@@ -18,7 +18,6 @@ sprites.init()
 running: bool = True # Spiel läuft noch?
 while running:
     
-
     # Ereignis-Handling
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
