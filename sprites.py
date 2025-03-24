@@ -2,6 +2,8 @@
 import pygame
 import random
 
+#Eigene Imports
+
 # Globalle sprites Konstanzen
 SCREEN_WIDTH: int = 800 # Breite des Spiel Fensters
 SCREEN_HEIGHT: int = 600 # Höhe des Spiel Fensters
@@ -12,6 +14,7 @@ all_hud_sprites: pygame.sprite.Group = pygame.sprite.Group() # Alle Sprites für
 
 hg: pygame.Surface = None # Hintergrund
 ship: pygame.Surface = None # Schiff Sprite
+frame_couter: int = 0 #Framecounter
 
 class Hintergrund(pygame.sprite.Sprite):
     """
@@ -57,13 +60,15 @@ class Ship(pygame.sprite.Sprite):
     Dies ist ein Schiff
     """
     #Konstanten
-    UI_HP = 0  #Konstante für UI Element Index
+    UI_HP = 0  #Konstante für UI Element Gesundheit
+    UI_SCORE = 1 # Konstante für UI Element Score
     # Variablen
     image: pygame.Surface = None #Das Schiff
     rect: pygame.Rect = None #Rechteck kopierziel des Sprites
     hp: int = 500 #Gesundheit des Schiffs
     speed: int = 10 #Geschwindigkeit des Schiffs
     shot_cooldown: int = 0 #Cooldown Timer für Schüsse
+    score: int = 0 # Punkte
     def __init__(self):
         """
         Initialisieren des Schiffs, image und rect setzen
@@ -77,6 +82,7 @@ class Ship(pygame.sprite.Sprite):
         """
         Updatemethode für Handling über eine Sprite Gruppe
         """
+        global all_game_sprites
         # Tastenaktionen
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
@@ -93,12 +99,22 @@ class Ship(pygame.sprite.Sprite):
                 self.rect.y += self.speed
         if keys[pygame.K_LCTRL]:
             if self.shot_cooldown == 0:
-                global all_game_sprites
+                
                 all_game_sprites.add(Laser(self.rect))
                 self.shot_cooldown = 5
         # Andere Akionen
         if self.shot_cooldown > 0:
             self.shot_cooldown -=1
+        #Kollisionen
+        for sprite in all_game_sprites.sprites():
+            if isinstance(sprite, Enemy) or isinstance(sprite, EnemyLaser):
+                if self.rect.colliderect(sprite.rect):
+                    self.hp -= sprite.hp
+                    self.score += sprite.score
+                    all_game_sprites.remove(sprite)
+                    if self.hp <= 0:
+                        all_game_sprites.remove(self)
+                        pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'GameOver'}))
 class Laser(pygame.sprite.Sprite):
     """
     Dies ist ein Laser des Schiffs
@@ -120,20 +136,32 @@ class Laser(pygame.sprite.Sprite):
         """
         Updatemethode für Handling über eine Sprite Gruppe
         """
+        global all_game_sprites, ship
         self.rect.top -= self.speed
-        if self.rect.top < 0-self.rect.height:
-            global all_game_sprites
+        if self.rect.bottom < 0:
             all_game_sprites.remove(self)
+        else:
+            for sprite in all_game_sprites.sprites():
+                if isinstance(sprite, Enemy):
+                    if self.rect.colliderect(sprite.rect):
+                        sprite.hp -= self.hp
+                        if sprite.hp <= 0:
+                            ship.score += sprite.score
+                            all_game_sprites.remove(sprite)
+                        all_game_sprites.remove(self)
 class Enemy(pygame.sprite.Sprite):
     """
     Hier werden alle Gegner instanziert
     """
     ENEMY_EINS: int = 0 # Erster Gegner
     gegnertyp: int = None # Gegnertyp
-    image: pygame.Surface = None #Derr Gegner
+    image: pygame.Surface = None #Der Gegner
     rect: pygame.Rect = None #Rechteck kopierziel des Sprites
     hp: int = None #Gesundheit des Gegners
-    temp_speed: int = None
+    score: int = 0 #Punkte für das Töten des Gegners
+    bewegung = None #Tupel and X:Y Tupel für die Bewegungssteuerung
+    bewegungs_counter: int = 0 #der Counter für die Bewegungssteuerung
+    bewegungs_wiederholungen: int = None # wie oft soll die selbe Bewegung noch wiederholt werden? 
     def __init__(self,gegnertyp: int):
         """
         Initialisieren des Gegners
@@ -143,15 +171,63 @@ class Enemy(pygame.sprite.Sprite):
         if self.gegnertyp == Enemy.ENEMY_EINS:
             self.image = pygame.image.load("Enemy1.png")
             self.image.set_colorkey((255, 255, 255))
-            self.rect = self.image.get_rect()
-            self.rect.topleft = (random.randint(0,SCREEN_WIDTH - self.rect.width), 0)
             self.hp = 20
-            self.temp_speed = 3
+            self.score =10
+            self.bewegung = ((2,2,8),
+                             (0,2,8),
+                             (-2,2,8),
+                             (0,2,8),
+                             (-2,2,8),
+                             (0,2,8),
+                             (2,2,8),
+                             (0,2,8))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (random.randint(0,SCREEN_WIDTH - self.rect.width), 0)
+        self.bewegungs_wiederholungen = self.bewegung[0][2]
+
     def update(self):
-        self.rect.top += self.temp_speed
+        global all_game_sprites
+        self.rect.x += self.bewegung[self.bewegungs_counter][0]
+        self.rect.y += self.bewegung[self.bewegungs_counter][1]
+        self.bewegungs_wiederholungen -= 1
+        if self.bewegungs_wiederholungen < 1:
+            self.bewegungs_counter += 1
+            if self.bewegungs_counter >= len(self.bewegung):
+                self.bewegungs_counter = 0
+            self.bewegungs_wiederholungen = self.bewegung[self.bewegungs_counter][2]
+        
+        generate_new_laser = random.randint(0,1000)
+        if generate_new_laser < 50:
+            all_game_sprites.add(EnemyLaser(self.rect))
+        if self.rect.top > SCREEN_HEIGHT or self.rect.bottom < 0 or self.rect.left > SCREEN_WIDTH or self.rect.right < 0:
+            all_game_sprites.remove(self)
+class EnemyLaser(pygame.sprite.Sprite):
+    """
+    Dies ist ein Laser eines Gegners
+    """
+    score: int = 0
+    image: pygame.Surface = None #Der Laser
+    rect: pygame.Rect = None #Rechteck kopierziel des Sprites
+    hp: int = 10  #Gesundheit des Lasers
+    speed: int = 15 #Geschwindigkeit des Lasers
+    def __init__(self,enemyrect: pygame.Rect):
+        """
+        Initialisieren des lasers
+        """
+        super().__init__()
+        self.image = pygame.image.load("LaserE.png")
+        self.image.set_colorkey((255, 255, 255))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (enemyrect.left, enemyrect.bottom +  1)
+    def update(self):
+        """
+        Updatemethode für Handling über eine Sprite Gruppe
+        """
+        self.rect.top += self.speed
         if self.rect.top > SCREEN_HEIGHT:
             global all_game_sprites
             all_game_sprites.remove(self)
+
 class UI_Element_Text(pygame.sprite.Sprite):
     """
     Hier werden alle UI Textelemente instanziert
@@ -161,23 +237,28 @@ class UI_Element_Text(pygame.sprite.Sprite):
     def __init__(self,element: int):
         super().__init__()
         self.element = element
-        self.FONT = pygame.font.Font(None,20)
+        self.FONT = pygame.font.Font(None,30)
     def update(self):
         """
         Updatemethode für Handling über eine Sprite Gruppe
         """
         global ship
-        self.image = self.FONT.render(f"HP: {ship.hp}",0,(255,255,255),None)
-        self.rect = self.image.get_rect()
-        self.rect.topleft = (0, 0)
+        if self.element == Ship.UI_HP:
+            self.image = self.FONT.render(f"HP: {ship.hp}",0,(255,255,255),None)
+            self.rect = self.image.get_rect()
+            self.rect.topleft = (0, 20)
+        elif self.element == Ship.UI_SCORE:
+            self.image = self.FONT.render(f"Punkte: {ship.score}",0,(255,255,255),None)
+            self.rect = self.image.get_rect()
+            self.rect.topleft = (0, 0)
 def init():
     global hg,ship,all_game_sprites,all_hud_sprites
     hg = Hintergrund(Hintergrund.SCROLL_DOWN)
     ship = Ship()
     all_game_sprites.add((hg,ship))
-    all_hud_sprites.add(UI_Element_Text(Ship.UI_HP))
+    all_hud_sprites.add(UI_Element_Text(Ship.UI_HP), UI_Element_Text(Ship.UI_SCORE))
 def enemy_creation():
     global all_game_sprites
     generate_new_enemy = random.randint(0,1000)
-    if generate_new_enemy < 10:
+    if generate_new_enemy < 20 * ( 1 + (frame_couter // 3600)):
         all_game_sprites.add(Enemy(Enemy.ENEMY_EINS))

@@ -19,12 +19,16 @@ sprites.init()
 
 # Spiel Schleife
 running: bool = gui.starten # Spiel läuft noch?
+
 while running:
     
     # Ereignis-Handling
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.USEREVENT and event.EventID == "GameOver":
+            running = False
+            gui.init_game_over()
     # Key Pressed Handling
     keys = pygame.key.get_pressed()
     if keys[pygame.K_ESCAPE] or (keys[pygame.K_LALT] and keys[pygame.K_q]): 
@@ -48,11 +52,11 @@ while running:
     pygame.display.flip()
 
     # Framerate steuern
+    sprites.frame_couter += 1
     pygame.time.Clock().tick(60)
 
 # Pygame beenden
 pygame.quit()
 
-#if rect1.colliderect(rect2)
 #pyinstaller --onefile --windowed --icon=Game.ico Program.py
 #pyinstaller --onefile --windowed Program.py

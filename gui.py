@@ -61,3 +61,20 @@ def init_pause():
     label.place(x=0, y=25)
     # Starte die Anwendung
     fenster.mainloop()
+
+def init_game_over():
+    global fenster
+     # Erstelle das Hauptfenster
+    fenster = tk.Tk()
+    fenster.title("Game Over")
+
+    # Setze die Fenstergröße
+    fenster.geometry("230x50")
+
+    # Erstelle label
+    label = tk.Label(fenster, text="Game Over")
+    label.place(x=80, y=5)
+    label = tk.Label(fenster, text="Vielen Dank für das Spielen von 2D Power!")
+    label.place(x=0, y=25)
+    # Starte die Anwendung
+    fenster.mainloop()
