@@ -260,5 +260,5 @@ def init():
 def enemy_creation():
     global all_game_sprites
     generate_new_enemy = random.randint(0,1000)
-    if generate_new_enemy < 20 * ( 1 + (frame_couter // 3600)):
+    if generate_new_enemy < 20 * ( 1 + (frame_couter // 600)):
         all_game_sprites.add(Enemy(Enemy.ENEMY_EINS))

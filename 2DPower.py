@@ -4,6 +4,7 @@ import pygame
 #Eigene Imports
 import sprites
 import gui
+import MP3
 
 #Erst "Menü"
 gui.init_menu()
@@ -19,7 +20,7 @@ sprites.init()
 
 # Spiel Schleife
 running: bool = gui.starten # Spiel läuft noch?
-
+MP3.start_mp3()
 while running:
     
     # Ereignis-Handling
@@ -57,6 +58,6 @@ while running:
 
 # Pygame beenden
 pygame.quit()
-
+MP3.end_mp3()
 #pyinstaller --onefile --windowed --icon=Game.ico Program.py
 #pyinstaller --onefile --windowed Program.py
