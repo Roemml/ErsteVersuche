@@ -7,20 +7,20 @@ import gui
 import MP3
 
 #Erst "Menü"
-gui.init_menu()
-# Initialisierungen
-#pygame
-pygame.init()
-screen: pygame.Surface = pygame.display.set_mode((sprites.SCREEN_WIDTH, sprites.SCREEN_HEIGHT))
-pygame.display.set_icon(pygame.image.load("Gameico.png"))
-pygame.display.set_caption("2D Power")
-
-#eigene
-sprites.init()
-
-# Spiel Schleife
+gui.init_start_fenster()
 running: bool = gui.starten # Spiel läuft noch?
-MP3.start_mp3()
+# Initialisierungen
+if running:
+    #pygame
+    pygame.init()
+    screen: pygame.Surface = pygame.display.set_mode((sprites.SCREEN_WIDTH, sprites.SCREEN_HEIGHT))
+    pygame.display.set_icon(pygame.image.load("Gameico.png"))
+    pygame.display.set_caption("2D Power")
+
+    #eigene
+    sprites.init()
+    MP3.start_music()
+    # Spiel Schleife
 while running:
     
     # Ereignis-Handling
@@ -35,7 +35,9 @@ while running:
     if keys[pygame.K_ESCAPE] or (keys[pygame.K_LALT] and keys[pygame.K_q]): 
         running = False
     if keys[pygame.K_p]:
+        MP3.pause_music()
         gui.init_pause()
+        MP3.resume_music()
 
     sprites.enemy_creation()
     # sprite updates
@@ -55,9 +57,8 @@ while running:
     # Framerate steuern
     sprites.frame_couter += 1
     pygame.time.Clock().tick(60)
-
-# Pygame beenden
-pygame.quit()
-MP3.end_mp3()
-#pyinstaller --onefile --windowed --icon=Game.ico Program.py
-#pyinstaller --onefile --windowed Program.py
+if gui.starten:
+    # Pygame beenden
+    pygame.quit()
+    MP3.end_music()
+    #pyinstaller --onefile --windowed --icon=Game.ico 2DPower.py

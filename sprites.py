@@ -1,6 +1,7 @@
 #Python Imports
 import pygame
 import random
+import os
 
 #Eigene Imports
 
@@ -9,16 +10,18 @@ SCREEN_WIDTH: int = 800 # Breite des Spiel Fensters
 SCREEN_HEIGHT: int = 600 # Höhe des Spiel Fensters
 
 # globale sprites Variablen
-all_game_sprites: pygame.sprite.Group = pygame.sprite.Group() # Alle Sprites des Spiels selbst
-all_hud_sprites: pygame.sprite.Group = pygame.sprite.Group() # Alle Sprites für das HUD
+all_game_sprites: pygame.sprite.LayeredUpdates = pygame.sprite.LayeredUpdates() # Alle Sprites des Spiels selbst
+all_hud_sprites: pygame.sprite.LayeredUpdates = pygame.sprite.LayeredUpdates() # Alle Sprites für das HUD
 
+highscore: int = 0
+score: int = 0
 hg: pygame.Surface = None # Hintergrund
 ship: pygame.Surface = None # Schiff Sprite
 frame_couter: int = 0 #Framecounter
 
 class Hintergrund(pygame.sprite.Sprite):
     """
-    Der Hintergrund des Spiels
+    Der Hintergrund des Spiels.
     """
     # Konstanten
     SCROLL_NO: int = 0 # Der Hintergrund ist statisch
@@ -30,9 +33,10 @@ class Hintergrund(pygame.sprite.Sprite):
     scrolling: int = None #Art des Scrolling
     scrolled: int = 0 #Counter wie weit schon gescrollt wurde
     image_unscrolled: pygame.Surface = None #Kopie des Original Images
+    layer: int = 0 #Layer der Sprites
     def __init__(self,bg_scroll: int=SCROLL_NO):
         """
-        Konstruktor des Hintergrunds
+        Konstruktor des Hintergrunds.
         """
         super().__init__()
         self.image = pygame.image.load("HGTest.png")
@@ -44,9 +48,9 @@ class Hintergrund(pygame.sprite.Sprite):
             self.image_unscrolled =self.image.copy()
             if self.scrolling == Hintergrund.SCROLL_DOWN:
                 self.rect.top =-(self.image.get_height() - SCREEN_HEIGHT)
-    def update(self):
+    def update(self) -> None:
         """
-        Updatemethode für Handling über eine Sprite Gruppe
+        Updatemethode für Handling über eine Sprite Gruppe.
         """
         if self.scrolling == Hintergrund.SCROLL_DOWN:
             self.image.scroll(dy=Hintergrund.SCROLL_SPEED)
@@ -57,7 +61,7 @@ class Hintergrund(pygame.sprite.Sprite):
                 self.scrolled = 0
 class Ship(pygame.sprite.Sprite):
     """
-    Dies ist ein Schiff
+    Dies ist ein Schiff.
     """
     #Konstanten
     UI_HP = 0  #Konstante für UI Element Gesundheit
@@ -65,22 +69,22 @@ class Ship(pygame.sprite.Sprite):
     # Variablen
     image: pygame.Surface = None #Das Schiff
     rect: pygame.Rect = None #Rechteck kopierziel des Sprites
-    hp: int = 500 #Gesundheit des Schiffs
+    hp: int = 50 #Gesundheit des Schiffs
     speed: int = 10 #Geschwindigkeit des Schiffs
     shot_cooldown: int = 0 #Cooldown Timer für Schüsse
     score: int = 0 # Punkte
     def __init__(self):
         """
-        Initialisieren des Schiffs, image und rect setzen
+        Initialisieren des Schiffs, image und rect setzen.
         """
         super().__init__()
         self.image = pygame.image.load("ship.png")
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect()
         self.rect.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT - (self.rect.height * 2))
-    def update(self):
+    def update(self) -> None:
         """
-        Updatemethode für Handling über eine Sprite Gruppe
+        Updatemethode für Handling über eine Sprite Gruppe.
         """
         global all_game_sprites
         # Tastenaktionen
@@ -113,11 +117,13 @@ class Ship(pygame.sprite.Sprite):
                     self.score += sprite.score
                     all_game_sprites.remove(sprite)
                     if self.hp <= 0:
+                        global score
+                        score = self.score
                         all_game_sprites.remove(self)
                         pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'GameOver'}))
 class Laser(pygame.sprite.Sprite):
     """
-    Dies ist ein Laser des Schiffs
+    Dies ist ein Laser des Schiffs.
     """
     image: pygame.Surface = None #Der Laser
     rect: pygame.Rect = None #Rechteck kopierziel des Sprites
@@ -125,16 +131,16 @@ class Laser(pygame.sprite.Sprite):
     speed: int = 15 #Geschwindigkeit des Lasers
     def __init__(self,shiprect: pygame.Rect):
         """
-        Initialisieren des lasers
+        Initialisieren des Lasers.
         """
         super().__init__()
         self.image = pygame.image.load("Laser1.png")
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect()
         self.rect.bottomleft = (shiprect.left, shiprect.top + 1)
-    def update(self):
+    def update(self) -> None:
         """
-        Updatemethode für Handling über eine Sprite Gruppe
+        Updatemethode für Handling über eine Sprite Gruppe.
         """
         global all_game_sprites, ship
         self.rect.top -= self.speed
@@ -151,7 +157,7 @@ class Laser(pygame.sprite.Sprite):
                         all_game_sprites.remove(self)
 class Enemy(pygame.sprite.Sprite):
     """
-    Hier werden alle Gegner instanziert
+    Hier werden alle Gegner instanziert.
     """
     ENEMY_EINS: int = 0 # Erster Gegner
     gegnertyp: int = None # Gegnertyp
@@ -164,7 +170,7 @@ class Enemy(pygame.sprite.Sprite):
     bewegungs_wiederholungen: int = None # wie oft soll die selbe Bewegung noch wiederholt werden? 
     def __init__(self,gegnertyp: int):
         """
-        Initialisieren des Gegners
+        Initialisieren des Gegners.
         """
         super().__init__()
         self.gegnertyp = gegnertyp
@@ -185,7 +191,10 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.topleft = (random.randint(0,SCREEN_WIDTH - self.rect.width), 0)
         self.bewegungs_wiederholungen = self.bewegung[0][2]
 
-    def update(self):
+    def update(self) -> None:
+        """
+        Updatemethode für Handling über eine Sprite Gruppe.
+        """
         global all_game_sprites
         self.rect.x += self.bewegung[self.bewegungs_counter][0]
         self.rect.y += self.bewegung[self.bewegungs_counter][1]
@@ -203,7 +212,7 @@ class Enemy(pygame.sprite.Sprite):
             all_game_sprites.remove(self)
 class EnemyLaser(pygame.sprite.Sprite):
     """
-    Dies ist ein Laser eines Gegners
+    Dies ist ein Laser eines Gegners.
     """
     score: int = 0
     image: pygame.Surface = None #Der Laser
@@ -212,16 +221,16 @@ class EnemyLaser(pygame.sprite.Sprite):
     speed: int = 15 #Geschwindigkeit des Lasers
     def __init__(self,enemyrect: pygame.Rect):
         """
-        Initialisieren des lasers
+        Initialisieren des Lasers.
         """
         super().__init__()
         self.image = pygame.image.load("LaserE.png")
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect()
         self.rect.topleft = (enemyrect.left, enemyrect.bottom +  1)
-    def update(self):
+    def update(self) -> None:
         """
-        Updatemethode für Handling über eine Sprite Gruppe
+        Updatemethode für Handling über eine Sprite Gruppe.
         """
         self.rect.top += self.speed
         if self.rect.top > SCREEN_HEIGHT:
@@ -230,17 +239,20 @@ class EnemyLaser(pygame.sprite.Sprite):
 
 class UI_Element_Text(pygame.sprite.Sprite):
     """
-    Hier werden alle UI Textelemente instanziert
+    Hier werden alle UI Textelemente instanziert.
     """
     element: int = None # Das Element des UIs
     FONT: pygame.font.Font = None #Font für die Schrift
     def __init__(self,element: int):
+        """
+        Initialisierung des UI Elements.
+        """
         super().__init__()
         self.element = element
         self.FONT = pygame.font.Font(None,30)
-    def update(self):
+    def update(self) -> None:
         """
-        Updatemethode für Handling über eine Sprite Gruppe
+        Updatemethode für Handling über eine Sprite Gruppe.
         """
         global ship
         if self.element == Ship.UI_HP:
@@ -251,14 +263,42 @@ class UI_Element_Text(pygame.sprite.Sprite):
             self.image = self.FONT.render(f"Punkte: {ship.score}",0,(255,255,255),None)
             self.rect = self.image.get_rect()
             self.rect.topleft = (0, 0)
-def init():
-    global hg,ship,all_game_sprites,all_hud_sprites
+def init() -> None:
+    """
+    Genereller Spielstart.
+    """
+    global highscore,hg,ship,all_game_sprites,all_hud_sprites
+    # Überprüfen, ob die Datei existiert und sie leer ist
+    if not os.path.exists("Highscore.txt") or os.path.getsize("Highscore.txt") == 0:
+        # Datei existiert nicht oder ist leer, also schreiben wir "0" hinein
+        with open("Highscore.txt", 'w') as file:
+            file.write("0")
+    with open("Highscore.txt", 'r') as file:
+        try:
+            highscore  = int(file.read())
+            print('Highscore erfolgreich geslesen')
+        except:
+            highscore = 0
+            print('Highscore manuell auf 0 gesetzt')
     hg = Hintergrund(Hintergrund.SCROLL_DOWN)
     ship = Ship()
+    # all_game_sprites.add((hg,ship))
     all_game_sprites.add((hg,ship))
     all_hud_sprites.add(UI_Element_Text(Ship.UI_HP), UI_Element_Text(Ship.UI_SCORE))
-def enemy_creation():
+def enemy_creation() -> None:
+    """
+    Hier werden die Gegner erzeugt.
+    """
     global all_game_sprites
     generate_new_enemy = random.randint(0,1000)
     if generate_new_enemy < 20 * ( 1 + (frame_couter // 600)):
         all_game_sprites.add(Enemy(Enemy.ENEMY_EINS))
+def set_new_highscore() -> bool:
+    try:
+        with open("Highscore.txt", 'w') as file:
+            file.write(str(score))
+        print("Highscore erfolgreich geupdated")
+        return True
+    except Exception as e:
+        print(f"Highscore nicht erfolgreich geupdated: {e}")
+        return False
