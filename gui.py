@@ -2,6 +2,9 @@ import tkinter as tk
 
 import sprites
 
+ALIGN_LEFT = "0"
+ALIGN_CENTER = "1"
+
 starten: bool = True
 
 # Funktion, die beim Drücken des Buttons aufgerufen wird
@@ -107,7 +110,55 @@ def init_game_over() -> None:
     fenster.mainloop()
 
 def parse_geometry(geometry: str) -> tuple[int, int]:
+    """
+    Parst einen geometry String (WIDTHxHEIGHT+X+Y) in ein Tupel (WIDTH,HEIGHT) 
+    """
     split = geometry.split("x")
     return (int(split[0]), split[1].split("+")[0])
+#111 last line
 
+def erstelle_Fenster(fenster_name:str="Fenster",fenster_breite:int=0,fenster_hoehe:int=0,protocols:tuple[tuple[str,str]]=None,*widgets:dict) -> tk.Tk:
+    """
+    Erstellt dynamisch ein Fenster in der Mitte des aktuellen Bildschirms.
+
+    ACHTUNG: die Funktionen für Protokolle und Buttons muss man natürlich selber schreiben
+    Argumente:
+        fenster_name - String: So wird das Fenster heißen
+        fenster_breite - Integer: Breite des Fensters in Pixel, wenn nicht mitgegeben oder 0, oder nicht alles drauf passt, wird die Größe berechnet.
+        fenster_hoehe - Integer: Höhe des Fensters in Pixel, wenn nicht mitgegeben oder 0, oder nicht alles drauf passt, wird die Größe berechnet.
+        protocola - Tupel(String,String) Name des protokolls und Name der Funktion
+        widget - Dictionary - Für jedes Element auf dem Fenster von Oben bis unten ein Dictionary, dass das Element beschreibt
+    """
+    fenster = tk.Tk()
+    fenster.title = fenster_name
+    min_breite = 0
+    min_hoehe = 0
+    elemente :tuple[tk.Widget] = []
     
+    for protocol in protocols:
+        try:
+            fenster.protocol(protocol[0], protocol[1])
+        except Exception as e:
+            print(f"Protokoll {protocol} für Fenster {fenster_name} konnte nicht erstellt werden: {e}")
+    for widget in widgets:
+        if not ("Type" in widget): print(f"widget {widget} hat keinen Eintrag für Type")
+        if widget["Type"] == "Space": 
+            try: min_hoehe += int(widget["Space"])
+            except Exception as e: print(f"Fehler beim Space erstellen: {e}")
+        elif widget["Type"] == "Label": 
+            try:
+                element, min_hoehe, element_breite = __fenster_label(widget)
+                if element_breite > min_breite: min_breite = element_breite
+                elemente.append(element)
+            except Exception as e:
+                print(f"Fehler beim Label erstellen: {e}")
+        elif widget["Type"] == "Button":
+            try:
+                element, min_hoehe, element_breite = __fenster_button(widget)
+                if element_breite > min_breite: min_breite = element_breite
+                elemente.append(element)
+            except Exception as e:
+                print(f"Fehler beim Button erstellen: {e}")
+        
+def __fenster_label(widget:dict,current_height:int)->tuple[tk.Label,int,int]: ...
+def __fenster_button(widget:dict,current_height:int)->tuple[tk.Button,int,int]: ...
