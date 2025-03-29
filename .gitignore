@@ -175,6 +175,7 @@ cython_debug/
 
 #Test.py kann ich für Tests benutzen dann
 Test.py
-highscore.txt
+#Highscore bei direkten Tests
+highscore.*
 # Ausnahme für crypt.pyc, diese Datei soll nicht ignoriert werden
 !crypt.pyc

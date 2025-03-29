@@ -2,58 +2,49 @@
 import pygame
 import random
 import os
-
-#Eigene Imports
-
-# Globalle sprites Konstanzen
-SCREEN_WIDTH: int = 800 # Breite des Spiel Fensters
-SCREEN_HEIGHT: int = 600 # Höhe des Spiel Fensters
-
-# globale sprites Variablen
-all_game_sprites: pygame.sprite.LayeredUpdates = pygame.sprite.LayeredUpdates() # Alle Sprites des Spiels selbst
-all_hud_sprites: pygame.sprite.LayeredUpdates = pygame.sprite.LayeredUpdates() # Alle Sprites für das HUD
-
-highscore: int = 0
-score: int = 0
-hg: pygame.Surface = None # Hintergrund
-ship: pygame.Surface = None # Schiff Sprite
-frame_couter: int = 0 #Framecounter
-
+# Globale Konstanzen
+SCREEN_WIDTH:int = 800 # Breite des Spiel Fensters
+SCREEN_HEIGHT:int = 600 # Höhe des Spiel Fensters
+LAYER_HG:int = 0 #Hintergründe sind ganz im Hintergrund
+LAYER_ENEMY:int = 1 #Enemy Layer
+LAYER_SHIP:int = 2 #Schill Layer
+LAYER_LASER:int = 3 #Laser layer
+LAYER_UI:int = 4 #Layer User Interface
+# Globale Variablen
+all_game_sprites:pygame.sprite.LayeredUpdates = pygame.sprite.LayeredUpdates() # Alle Sprites des Spiels selbst
+all_hud_sprites:pygame.sprite.LayeredUpdates = pygame.sprite.LayeredUpdates() # Alle Sprites für das HUD
+frame_couter:int = 0 #Framecounter
+#Klassen
 class Hintergrund(pygame.sprite.Sprite):
     """
     Der Hintergrund des Spiels.
     """
-    # Konstanten
-    SCROLL_NO: int = 0 # Der Hintergrund ist statisch
-    SCROLL_DOWN: int = 1 # Her Hintergrund scrollt nach unten, man bewegt sich nach oben
-    SCROLL_SPEED: int = 15 # Scrollgeschwindigkeit
-    # Variablen
-    image: pygame.Surface = None #Das Hintergrundbild
-    rect: pygame.Rect = None #Rechteck kopierziel des Sprites
-    scrolling: int = None #Art des Scrolling
-    scrolled: int = 0 #Counter wie weit schon gescrollt wurde
-    image_unscrolled: pygame.Surface = None #Kopie des Original Images
-    layer: int = 0 #Layer der Sprites
+    # Klassen Konstanten
+    SCROLL_NO:int = 0 # Der Hintergrund ist statisch
+    SCROLL_DOWN:int = 1 # Her Hintergrund scrollt nach unten, man bewegt sich nach oben
+    SCROLL_SPEED:int = 15 # Scrollgeschwindigkeit
     def __init__(self,bg_scroll: int=SCROLL_NO):
         """
         Konstruktor des Hintergrunds.
         """
         super().__init__()
+        self._layer = LAYER_HG
         self.image = pygame.image.load("HGTest.png")
         self.rect = self.image.get_rect()
         self.rect.topleft = (0, 0)
         self.scrolling = bg_scroll
+        self.scrolled = 0
         # Attribute, die nur für scrollende Hintergründe benötigt werden
         if not self.scrolling == Hintergrund.SCROLL_NO:
-            self.image_unscrolled =self.image.copy()
+            self.image_unscrolled = self.image.copy()
             if self.scrolling == Hintergrund.SCROLL_DOWN:
-                self.rect.top =-(self.image.get_height() - SCREEN_HEIGHT)
+                self.rect.top = -(self.image.get_height() - SCREEN_HEIGHT)
     def update(self) -> None:
         """
         Updatemethode für Handling über eine Sprite Gruppe.
         """
         if self.scrolling == Hintergrund.SCROLL_DOWN:
-            self.image.scroll(dy=Hintergrund.SCROLL_SPEED)
+            self.image.scroll(dy = Hintergrund.SCROLL_SPEED)
             self.scrolled += Hintergrund.SCROLL_SPEED
             # Wenn der Hintergrund am Ende angelangt ist, muss er wieder neu gesetzt werden, hier aus der Kopie des Original Images
             if self.scrolled >= self.image.get_height() - SCREEN_HEIGHT:
@@ -63,9 +54,6 @@ class Ship(pygame.sprite.Sprite):
     """
     Dies ist ein Schiff.
     """
-    #Konstanten
-    UI_HP = 0  #Konstante für UI Element Gesundheit
-    UI_SCORE = 1 # Konstante für UI Element Score
     # Variablen
     image: pygame.Surface = None #Das Schiff
     rect: pygame.Rect = None #Rechteck kopierziel des Sprites
@@ -73,11 +61,13 @@ class Ship(pygame.sprite.Sprite):
     speed: int = 10 #Geschwindigkeit des Schiffs
     shot_cooldown: int = 0 #Cooldown Timer für Schüsse
     score: int = 0 # Punkte
+    highscore:int = 0 # Punkte 
     def __init__(self):
         """
         Initialisieren des Schiffs, image und rect setzen.
         """
         super().__init__()
+        self._layer = LAYER_SHIP
         self.image = pygame.image.load("ship.png")
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect()
@@ -114,11 +104,9 @@ class Ship(pygame.sprite.Sprite):
             if isinstance(sprite, Enemy) or isinstance(sprite, EnemyLaser):
                 if self.rect.colliderect(sprite.rect):
                     self.hp -= sprite.hp
-                    self.score += sprite.score
+                    Ship.score += sprite.score
                     all_game_sprites.remove(sprite)
                     if self.hp <= 0:
-                        global score
-                        score = self.score
                         all_game_sprites.remove(self)
                         pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'GameOver'}))
 class Laser(pygame.sprite.Sprite):
@@ -134,6 +122,7 @@ class Laser(pygame.sprite.Sprite):
         Initialisieren des Lasers.
         """
         super().__init__()
+        self._layer = LAYER_LASER
         self.image = pygame.image.load("Laser1.png")
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect()
@@ -152,7 +141,7 @@ class Laser(pygame.sprite.Sprite):
                     if self.rect.colliderect(sprite.rect):
                         sprite.hp -= self.hp
                         if sprite.hp <= 0:
-                            ship.score += sprite.score
+                            Ship.score += sprite.score
                             all_game_sprites.remove(sprite)
                         all_game_sprites.remove(self)
 class Enemy(pygame.sprite.Sprite):
@@ -173,6 +162,7 @@ class Enemy(pygame.sprite.Sprite):
         Initialisieren des Gegners.
         """
         super().__init__()
+        self._layer = LAYER_ENEMY
         self.gegnertyp = gegnertyp
         if self.gegnertyp == Enemy.ENEMY_EINS:
             self.image = pygame.image.load("Enemy1.png")
@@ -224,6 +214,7 @@ class EnemyLaser(pygame.sprite.Sprite):
         Initialisieren des Lasers.
         """
         super().__init__()
+        self._layer = LAYER_LASER
         self.image = pygame.image.load("LaserE.png")
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect()
@@ -241,6 +232,9 @@ class UI_Element_Text(pygame.sprite.Sprite):
     """
     Hier werden alle UI Textelemente instanziert.
     """
+    #Konstanten
+    UI_HP = 0  #Konstante für UI Element Gesundheit
+    UI_SCORE = 1 # Konstante für UI Element Score
     element: int = None # Das Element des UIs
     FONT: pygame.font.Font = None #Font für die Schrift
     def __init__(self,element: int):
@@ -248,6 +242,7 @@ class UI_Element_Text(pygame.sprite.Sprite):
         Initialisierung des UI Elements.
         """
         super().__init__()
+        self._layer = LAYER_UI
         self.element = element
         self.FONT = pygame.font.Font(None,30)
     def update(self) -> None:
@@ -255,36 +250,34 @@ class UI_Element_Text(pygame.sprite.Sprite):
         Updatemethode für Handling über eine Sprite Gruppe.
         """
         global ship
-        if self.element == Ship.UI_HP:
-            self.image = self.FONT.render(f"HP: {ship.hp}",0,(255,255,255),None)
+        if self.element == UI_Element_Text.UI_HP:
+            self.image = self.FONT.render(f"HP: {Ship.hp}",0,(255,255,255),None)
             self.rect = self.image.get_rect()
             self.rect.topleft = (0, 20)
-        elif self.element == Ship.UI_SCORE:
-            self.image = self.FONT.render(f"Punkte: {ship.score}",0,(255,255,255),None)
+        elif self.element == UI_Element_Text.UI_SCORE:
+            self.image = self.FONT.render(f"Punkte: {Ship.score}",0,(255,255,255),None)
             self.rect = self.image.get_rect()
             self.rect.topleft = (0, 0)
 def init() -> None:
     """
     Genereller Spielstart.
     """
-    global highscore,hg,ship,all_game_sprites,all_hud_sprites
+    global all_game_sprites,all_hud_sprites
     # Überprüfen, ob die Datei existiert und sie leer ist
-    if not os.path.exists("Highscore.txt") or os.path.getsize("Highscore.txt") == 0:
+    if not os.path.exists("Highscore.bin") or os.path.getsize("Highscore.bin") == 0:
         # Datei existiert nicht oder ist leer, also schreiben wir "0" hinein
-        with open("Highscore.txt", 'w') as file:
+        with open("Highscore.bin", 'w') as file:
             file.write("0")
-    with open("Highscore.txt", 'r') as file:
+    with open("Highscore.bin", 'r') as file:
         try:
-            highscore  = int(file.read())
+            Ship.highscore  = int(file.read())
             print('Highscore erfolgreich geslesen')
         except:
-            highscore = 0
+            Ship.highscore = 0
             print('Highscore manuell auf 0 gesetzt')
-    hg = Hintergrund(Hintergrund.SCROLL_DOWN)
     ship = Ship()
-    # all_game_sprites.add((hg,ship))
-    all_game_sprites.add((hg,ship))
-    all_hud_sprites.add(UI_Element_Text(Ship.UI_HP), UI_Element_Text(Ship.UI_SCORE))
+    all_game_sprites.add((Hintergrund(Hintergrund.SCROLL_DOWN),ship))
+    all_hud_sprites.add(UI_Element_Text(UI_Element_Text.UI_HP), UI_Element_Text(UI_Element_Text.UI_SCORE))
 def enemy_creation() -> None:
     """
     Hier werden die Gegner erzeugt.
@@ -295,8 +288,8 @@ def enemy_creation() -> None:
         all_game_sprites.add(Enemy(Enemy.ENEMY_EINS))
 def set_new_highscore() -> bool:
     try:
-        with open("Highscore.txt", 'w') as file:
-            file.write(str(score))
+        with open("Highscore.bin", 'w') as file:
+            file.write(str(Ship.score))
         print("Highscore erfolgreich geupdated")
         return True
     except Exception as e:

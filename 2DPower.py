@@ -16,13 +16,11 @@ if running:
     screen: pygame.Surface = pygame.display.set_mode((sprites.SCREEN_WIDTH, sprites.SCREEN_HEIGHT))
     pygame.display.set_icon(pygame.image.load("Gameico.png"))
     pygame.display.set_caption("2D Power")
-
     #eigene
     sprites.init()
     MP3.start_music()
     # Spiel Schleife
 while running:
-    
     # Ereignis-Handling
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
