@@ -1,11 +1,9 @@
 #Python Imports
 import pygame
-
 #Eigene Imports
 import sprites
 import gui
 import MP3
-
 #Erst "Menü"
 gui.init_start_fenster()
 running: bool = gui.starten # Spiel läuft noch?
@@ -36,27 +34,16 @@ while running:
         MP3.pause_music()
         gui.init_pause()
         MP3.resume_music()
-
     sprites.enemy_creation()
-    # sprite updates
-    sprites.all_game_sprites.update()
-    sprites.all_hud_sprites.update()
-    # sprites zeichnen
-    sprites.all_game_sprites.draw(screen)
-    sprites.all_hud_sprites.draw(screen)
-
-    # Kreis zeichnen
-    #pygame.draw.rect(screen, grün, (pSchiffal.X-25, pSchiffal.Y-25, 50, 50))
-    #pygame.draw.circle(screen, rot, (x, y), radius)
-
-    # Bildschirm aktualisieren
+    sprites.all_sprites.update()
+    sprites.all_sprites.draw(screen)
     pygame.display.flip()
-
-    # Framerate steuern
     sprites.frame_couter += 1
     pygame.time.Clock().tick(60)
 if gui.starten:
-    # Pygame beenden
     pygame.quit()
     MP3.end_music()
-    #pyinstaller --onefile --windowed --icon=Game.ico 2DPower.py
+# Kreis zeichnen
+#pygame.draw.rect(screen, grün, (pSchiffal.X-25, pSchiffal.Y-25, 50, 50))
+#pygame.draw.circle(screen, rot, (x, y), radius)
+#pyinstaller --onefile --windowed --icon=Game.ico 2DPower.py

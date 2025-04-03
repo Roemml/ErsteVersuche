@@ -11,6 +11,7 @@ def play_music(mp3_file, stop_music_event, pause_music_event, resume_music_event
     """
     pygame.mixer.init()
     pygame.mixer.music.load(mp3_file)
+    pygame.mixer.music.set_volume(0.25)
     pygame.mixer.music.play(-1)  # Loop indefinitely
     while not stop_music_event.is_set():
         if pause_music_event.is_set():
