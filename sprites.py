@@ -18,7 +18,13 @@ all_sprites:pygame.sprite.LayeredUpdates = pygame.sprite.LayeredUpdates() # Alle
 state:int = STATE_INIT
 level:int = 0 # Level
 frame_couter:int = 0 #Framecounter
-#Klassen
+#Enemy Laser Definitionen
+class LaserE1:
+    sprite:str = "LaserE1.png"
+    speed_x:int = 0
+    speed_y:int = 10
+    hp:int = 10
+
 class Hintergrund(pygame.sprite.Sprite):
     """
     Der Hintergrund des Spiels.
@@ -160,6 +166,9 @@ class Enemy(pygame.sprite.Sprite):
             self.image.set_colorkey((255, 255, 255))
             self.hp = 20
             self.score = 10
+            self.laser = LaserE1
+            self.boss = False
+            self.init = False
             self.bewegung = ((2,2,8),
                              (0,2,8),
                              (-2,2,8),
@@ -177,19 +186,25 @@ class Enemy(pygame.sprite.Sprite):
         """
         Updatemethode für Handling über eine Sprite Gruppe.
         """
+        # Bewegung
         global all_sprites
-        self.rect.x += self.bewegung[self.bewegungs_counter][0]
-        self.rect.y += self.bewegung[self.bewegungs_counter][1]
-        self.bewegungs_wiederholungen -= 1
-        if self.bewegungs_wiederholungen < 1:
-            self.bewegungs_counter += 1
-            if self.bewegungs_counter >= len(self.bewegung):
-                self.bewegungs_counter = 0
-            self.bewegungs_wiederholungen = self.bewegung[self.bewegungs_counter][2]
+        if self.boss == False or self.init == False:
+            self.rect.x += self.bewegung[self.bewegungs_counter][0]
+            self.rect.y += self.bewegung[self.bewegungs_counter][1]
+            self.bewegungs_wiederholungen -= 1
+            if self.bewegungs_wiederholungen < 1:
+                self.bewegungs_counter += 1
+                if self.bewegungs_counter >= len(self.bewegung):
+                    self.bewegungs_counter = 0
+                self.bewegungs_wiederholungen = self.bewegung[self.bewegungs_counter][2]
         
-        generate_new_laser = random.randint(0,1000)
-        if generate_new_laser < 50:
-            all_sprites.add(EnemyLaser(self.rect))
+        #Schuss
+        if self.laser != None:
+            generate_new_laser = random.randint(0,1000)
+            if generate_new_laser < 50:
+                all_sprites.add(EnemyLaser(self))
+
+        #Tod durch Bildschirmaustritt
         if self.rect.top > SCREEN_HEIGHT or self.rect.bottom < 0 or self.rect.left > SCREEN_WIDTH or self.rect.right < 0:
             self.kill()
 class EnemyLaser(pygame.sprite.Sprite):
@@ -197,23 +212,29 @@ class EnemyLaser(pygame.sprite.Sprite):
     Dies ist ein Laser eines Gegners.
     """
     score:int = 0
-    hp:int = 10  #Gesundheit des Lasers
-    def __init__(self, enemyrect:pygame.Rect, speed:int = 10):
+    def __init__(self, enemy:Enemy, laser_num:int = -1):
         """
         Initialisieren des Lasers.
         """
         super().__init__()
         self._layer = LAYER_LASER
-        self.image = pygame.image.load("LaserE.png")
+        if laser_num == -1:
+            self.laser = enemy.laser
+        else:
+            self.laser = enemy.laser[laser_num]
+        self.image = pygame.image.load(enemy.laser.sprite)
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect()
-        self.rect.topleft = (enemyrect.left, enemyrect.bottom + 1)
-        self.speed = speed
+        self.rect.top = enemy.rect.bottom + 1
+        self.rect.center = enemy.rect.center
+        self.speed_x = enemy.laser.speed_x
+        self.speed_y = enemy.laser.speed_y
+        self.hp = enemy.laser.hp
     def update(self) -> None:
         """
         Updatemethode für Handling über eine Sprite Gruppe.
         """
-        self.rect.top += self.speed
+        self.rect.top += self.speed_y
         if self.rect.top > SCREEN_HEIGHT:
             self.kill()
 
@@ -272,8 +293,10 @@ def enemy_creation() -> None:
     """
     global all_sprites
     generate_new_enemy = random.randint(0,1000)
-    if generate_new_enemy < 20 * ( 1 + (frame_couter // 600)):
-        all_sprites.add(Enemy(Enemy.ENEMY_EINS))
+    if level == 1:
+        if frame_couter < 900:
+            if generate_new_enemy < 20:
+                all_sprites.add(Enemy(Enemy.ENEMY_EINS))
 def set_new_highscore() -> bool:
     try:
         with open("Highscore.bin", 'w') as file:
