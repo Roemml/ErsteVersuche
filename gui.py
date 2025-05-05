@@ -6,7 +6,6 @@ import sprites
 ALIGN_LEFT = "0"
 ALIGN_CENTER = "1"
 #Globale Variablen
-starten:bool = True
 #Methoden
 def startSpiel(fenster:tk.Tk) -> None:
     """
@@ -17,8 +16,7 @@ def start_fenster_schliessen(fenster:tk.Tk) -> None:
     """
     Startfenster schließen und somit Anwendung gleich beenden.
     """
-    global starten
-    starten = False
+    sprites.state = sprites.STATE_CLOSE
     fenster.destroy()
 def init_start_fenster() -> None:
     """

@@ -10,8 +10,13 @@ LAYER_ENEMY:int = 1 #Enemy Layer
 LAYER_SHIP:int = 2 #Schill Layer
 LAYER_LASER:int = 3 #Laser layer
 LAYER_UI:int = 4 #Layer User Interface
+STATE_CLOSE:int = 0 #Schluss Aus Ende Vorbei
+STATE_INIT:int = 1 #Start 2DPower
+STATE_PLAY:int = 2 #Spiele 2DPower
 # Globale Variablen
 all_sprites:pygame.sprite.LayeredUpdates = pygame.sprite.LayeredUpdates() # Alle Sprites des Spiels selbst
+state:int = STATE_INIT
+level:int = 0 # Level
 frame_couter:int = 0 #Framecounter
 #Klassen
 class Hintergrund(pygame.sprite.Sprite):
@@ -99,10 +104,10 @@ class Ship(pygame.sprite.Sprite):
         for sprite in all_sprites.sprites():
             if isinstance(sprite, Enemy) or isinstance(sprite, EnemyLaser):
                 if self.rect.colliderect(sprite.rect):
-                    self.hp -= sprite.hp
+                    Ship.hp -= sprite.hp
                     Ship.score += sprite.score
                     sprite.kill()
-                    if self.hp <= 0:
+                    if Ship.hp <= 0:
                         self.kill()
                         pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'GameOver'}))
 class Laser(pygame.sprite.Sprite):
@@ -244,20 +249,22 @@ def init() -> None:
     """
     Genereller Spielstart.
     """
+    if level == 1:
+        # Überprüfen, ob die Datei existiert und sie leer ist
+        if not os.path.exists("Highscore.bin") or os.path.getsize("Highscore.bin") == 0:
+            # Datei existiert nicht oder ist leer, also schreiben wir "0" hinein
+            with open("Highscore.bin", 'w') as file:
+                file.write("0")
+        with open("Highscore.bin", 'r') as file:
+            try:
+                Ship.highscore  = int(file.read())
+                print('Highscore erfolgreich geslesen')
+            except:
+                Ship.highscore = 0
+                print('Highscore manuell auf 0 gesetzt')
+        ship = Ship()
     global all_sprites
-    # Überprüfen, ob die Datei existiert und sie leer ist
-    if not os.path.exists("Highscore.bin") or os.path.getsize("Highscore.bin") == 0:
-        # Datei existiert nicht oder ist leer, also schreiben wir "0" hinein
-        with open("Highscore.bin", 'w') as file:
-            file.write("0")
-    with open("Highscore.bin", 'r') as file:
-        try:
-            Ship.highscore  = int(file.read())
-            print('Highscore erfolgreich geslesen')
-        except:
-            Ship.highscore = 0
-            print('Highscore manuell auf 0 gesetzt')
-    ship = Ship()
+    all_sprites.empty()
     all_sprites.add(Hintergrund(Hintergrund.SCROLL_DOWN), ship,UI_Element_Text(UI_Element_Text.UI_HP), UI_Element_Text(UI_Element_Text.UI_SCORE))
 def enemy_creation() -> None:
     """
