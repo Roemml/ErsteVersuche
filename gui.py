@@ -34,6 +34,20 @@ def init_pause() -> None:
     """
     fenster=erstelle_Fenster({"type":"label", "text":"Pause", "align":ALIGN_CENTER}, {"type":"label", "text":"Zum Weiter spielen Fenster schließen", "align":ALIGN_CENTER}, fenster_name = "Pause")
     fenster.mainloop()
+def init_game_done() -> None:
+    """
+    Game Over Screen anzeigen
+    """
+    if sprites.Ship.score > sprites.Ship.highscore:
+        hs_text = "Das ist ein neuer Highscore!"
+        sprites.set_new_highscore()
+    else:
+        hs_text = f"Highcore: {sprites.Ship.highscore}"
+    fenster = erstelle_Fenster({"type":"label", "text":"Herzlichen Glückwunsch!", "align":ALIGN_CENTER}, {"type":"label", "text":f"Score: {sprites.Ship.score}", "align":ALIGN_CENTER}
+                             ,{"type":"label", "text":hs_text, "align":ALIGN_CENTER}, {"type":"label", "text":"Vielen Dank für das Spielen von 2D Power!", "align":ALIGN_CENTER}
+                             ,{"type":"button", "text":"Start von Vorne", "command":"startSpiel(fenster)", "width":15, "height":1, "align":ALIGN_CENTER}
+                             ,fenster_name = "Gewonnen",protocols = (("WM_DELETE_WINDOW", "start_fenster_schliessen(fenster)"),))
+    fenster.mainloop()
 def init_game_over() -> None:
     """
     Game Over Screen anzeigen

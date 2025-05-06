@@ -173,6 +173,8 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+.vscode
+.vscode/
 #Test.py kann ich für Tests benutzen dann
 Test.py
 #Highscore bei direkten Tests

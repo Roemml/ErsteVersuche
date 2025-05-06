@@ -19,18 +19,18 @@ state:int = STATE_INIT
 level:int = 0 # Level
 frame_couter:int = 0 #Framecounter
 #Enemy Laser Definitionen
-class LaserE:
+class LaserBase:
     sprite:str = ""
     speed_x:int = 0
     speed_y:int = 0
     hp:int = 0
     fire_rate:int = 0
-class LaserE1(LaserE):
+class LaserE1(LaserBase):
     sprite:str = "LaserE1.png"
     speed_x:int = 0
     speed_y:int = 10
     hp:int = 10
-class LaserE2(LaserE):
+class LaserE2(LaserBase):
     sprite:str = "LaserE2.png"
     speed_x:int = 0
     speed_y:int = 20
@@ -39,10 +39,10 @@ class LaserE2a(LaserE2):
     speed_x:int = -20
 class LaserE2b(LaserE2):
     speed_x:int = +20
-class LaserEB1(LaserE):
+class LaserEB1(LaserBase):
     sprite:str = "LaserEB1.png"
     speed_x:int = 0
-    speed_y:int = 5
+    speed_y:int = 10
     hp:int = 30
 class Hintergrund(pygame.sprite.Sprite):
     """
@@ -84,16 +84,18 @@ class Ship(pygame.sprite.Sprite):
     """
     # Variablen
     hp:int = 500 #Gesundheit des Schiffs
-    speed:int = 10 #Geschwindigkeit des Schiffs
-    shot_cooldown:int = 0 #Cooldown Timer für Schüsse
-    iframe:int = 0 #Invulnerability Frames
     score:int = 0 # Punkte
-    highscore:int = 0 # Punkte 
+    highscore:int = 0 # Punkte
     def __init__(self):
         """
         Initialisieren des Schiffs, image und rect setzen.
         """
         super().__init__()
+        Ship.hp = 500
+        Ship.score = 0    
+        self.speed:int = 10 #Geschwindigkeit des Schiffs
+        self.shot_cooldown:int = 0 #Cooldown Timer für Schüsse
+        self.iframe:int = 0 #Invulnerability Frames
         self._layer = LAYER_SHIP
         _set_image_and_rect(self,"ship.png")
         self.rect.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT - (self.rect.height * 2))
@@ -103,19 +105,21 @@ class Ship(pygame.sprite.Sprite):
         """
         global all_sprites
         # Tastenaktionen
+        if self.iframe == 0: curr_speed = self.speed
+        else: curr_speed = (self.speed // 4)
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
-            if self.rect.left > self.speed:
-                self.rect.x -= self.speed
+            if self.rect.left > curr_speed:
+                self.rect.x -= curr_speed
         if keys[pygame.K_RIGHT]:
-            if self.rect.right < SCREEN_WIDTH - self.speed:
-                self.rect.x += self.speed
+            if self.rect.right < SCREEN_WIDTH - curr_speed:
+                self.rect.x += curr_speed
         if keys[pygame.K_UP]:
-            if self.rect.top > self.speed:    
-                self.rect.y -= self.speed
+            if self.rect.top > curr_speed:    
+                self.rect.y -= curr_speed
         if keys[pygame.K_DOWN]:
-            if self.rect.bottom < SCREEN_HEIGHT - self.speed:
-                self.rect.y += self.speed
+            if self.rect.bottom < SCREEN_HEIGHT - curr_speed:
+                self.rect.y += curr_speed
         if keys[pygame.K_LCTRL]:
             if self.shot_cooldown == 0:
                 all_sprites.add(Laser(self.rect))
@@ -138,9 +142,9 @@ class Ship(pygame.sprite.Sprite):
                         Ship.hp -= sprite.damage
                         self.iframe = 15
                         _bounce(self,sprite)
-                if Ship.hp <= 0:
-                    self.kill()
-                    pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'GameOver'}))
+            if Ship.hp <= 0:
+                self.kill()
+                pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'GameOver'}))
 class Laser(pygame.sprite.Sprite):
     """
     Dies ist ein Laser des Schiffs.
@@ -171,6 +175,7 @@ class Laser(pygame.sprite.Sprite):
                         if sprite.hp <= 0:
                             Ship.score += sprite.score
                             sprite.kill()
+                            if sprite.boss == True: pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'L1 Complete'}))
                         self.kill()
 class Enemy(pygame.sprite.Sprite):
     """
@@ -227,22 +232,23 @@ class Enemy(pygame.sprite.Sprite):
             self.hp = 2000
             self.score = 100
             self.laser = (LaserEB1,)
-            self.fire_rate = 10
+            self.fire_rate = 100
             self.boss = True
             self.damage = 50
             self.init = True
-            self.bewegung = ((0,4,(SCREEN_HEIGHT-self.image.get_height())//4 ),
-                             (0,-4,(SCREEN_HEIGHT-self.image.get_height())//4 ),
-                             (-4,0,(SCREEN_WIDTH-self.image.get_width())//8),
-                             (0,4,(SCREEN_HEIGHT-self.image.get_height())//4 ),
-                             (0,-4,(SCREEN_HEIGHT-self.image.get_height())//4 ),
-                             (4,0,(SCREEN_WIDTH-self.image.get_width())//8),
-                             (0,4,(SCREEN_HEIGHT-self.image.get_height())//4 ),
-                             (0,-4,(SCREEN_HEIGHT-self.image.get_height())//4 ),
-                             (4,0,(SCREEN_WIDTH-self.image.get_width())//8),
-                             (0,4,(SCREEN_HEIGHT-self.image.get_height())//4 ),
-                             (0,-4,(SCREEN_HEIGHT-self.image.get_height())//4 ),
-                             (-4,0,(SCREEN_WIDTH-self.image.get_width())//8))
+            self.speed = 8
+            self.bewegung = ((0,self.speed,(SCREEN_HEIGHT-self.image.get_height())//self.speed ),
+                             (0,-self.speed,(SCREEN_HEIGHT-self.image.get_height())//self.speed ),
+                             (-self.speed,0,(SCREEN_WIDTH-self.image.get_width())//(self.speed*2)),
+                             (0,self.speed,(SCREEN_HEIGHT-self.image.get_height())//self.speed ),
+                             (0,-self.speed,(SCREEN_HEIGHT-self.image.get_height())//self.speed ),
+                             (self.speed,0,(SCREEN_WIDTH-self.image.get_width())//(self.speed*2)),
+                             (0,self.speed,(SCREEN_HEIGHT-self.image.get_height())//self.speed ),
+                             (0,-self.speed,(SCREEN_HEIGHT-self.image.get_height())//self.speed ),
+                             (self.speed,0,(SCREEN_WIDTH-self.image.get_width())//(self.speed*2)),
+                             (0,self.speed,(SCREEN_HEIGHT-self.image.get_height())//self.speed ),
+                             (0,-self.speed,(SCREEN_HEIGHT-self.image.get_height())//self.speed ),
+                             (-self.speed,0,(SCREEN_WIDTH-self.image.get_width())//(self.speed*2)))
             self.rect.center = ((SCREEN_WIDTH / 2),1-(self.rect.height/2))
         self.bewegungs_wiederholungen = self.bewegung[0][2]
         self.bewegungs_counter = 0
@@ -281,15 +287,15 @@ class EnemyLaser(pygame.sprite.Sprite):
     Dies ist ein Laser eines Gegners.
     """
     score:int = 0
-    def __init__(self, enemy_rect:pygame.Rect, enemy_laser:LaserE):
+    def __init__(self, enemy_rect:pygame.Rect, enemy_laser:LaserBase):
         """
         Initialisieren des Lasers.
         """
         super().__init__()
         self._layer = LAYER_LASER
         _set_image_and_rect(self,enemy_laser.sprite)
+        self.rect.centerx = enemy_rect.centerx
         self.rect.top = enemy_rect.bottom + 1
-        self.rect.center = enemy_rect.center
         self.speed_x = enemy_laser.speed_x
         self.speed_y = enemy_laser.speed_y
         self.hp = enemy_laser.hp
@@ -347,7 +353,8 @@ def init() -> None:
                 Ship.highscore = 0
                 print('Highscore manuell auf 0 gesetzt')
         ship = Ship()
-    global all_sprites
+    global all_sprites, frame_couter
+    frame_couter = 0
     all_sprites.empty()
     all_sprites.add(Hintergrund(Hintergrund.SCROLL_DOWN), ship,UI_Element_Text(UI_Element_Text.UI_HP), UI_Element_Text(UI_Element_Text.UI_SCORE))
 def enemy_creation() -> None:
@@ -357,15 +364,15 @@ def enemy_creation() -> None:
     global all_sprites
     generate_new_enemy = random.randint(0,1000)
     if level == 1:
-        # if frame_couter < 900:
-        #     if generate_new_enemy < 20:
-        #         all_sprites.add(Enemy(Enemy.ENEMY_EINS))
-        # elif frame_couter < 3000:
-        #     if generate_new_enemy < 10:
-        #         all_sprites.add(Enemy(Enemy.ENEMY_EINS))
-        #     elif generate_new_enemy < 40:
-        #         all_sprites.add(Enemy(Enemy.ENEMY_ZWEI))
-        if frame_couter == 10:
+        if frame_couter < 900:
+            if generate_new_enemy < 20:
+                all_sprites.add(Enemy(Enemy.ENEMY_EINS))
+        elif frame_couter < 3000:
+            if generate_new_enemy < 10:
+                all_sprites.add(Enemy(Enemy.ENEMY_EINS))
+            elif generate_new_enemy < 40:
+                all_sprites.add(Enemy(Enemy.ENEMY_ZWEI))
+        elif frame_couter == 3300:
             all_sprites.add(Enemy(Enemy.ENEMY_BOSS_EINS))
 def set_new_highscore() -> bool:
     try:
@@ -381,5 +388,17 @@ def _set_image_and_rect(sprite:pygame.sprite.Sprite,image:str,set_colorkey:bool 
         if set_colorkey:
             sprite.image.set_colorkey(colorkey)
         sprite.rect = sprite.image.get_rect()
-def _bounce(weak:pygame.sprite.Sprite,strong:pygame.sprite.Sprite,bounce_x:int = 10, bounce_y:int = 10):
-    #if weak.rect.centerx
+def _bounce(weak:pygame.sprite.Sprite,strong:pygame.sprite.Sprite,bounce_x:int = 50, bounce_y:int = 50):
+    if weak.rect.centerx < strong.rect.centerx:
+        if weak.rect.left > bounce_x: weak.rect.left -= bounce_x
+        else: weak.rect.left = 0
+    elif weak.rect.centerx > strong.rect.centerx:
+        if weak.rect.right < (SCREEN_WIDTH - bounce_x - 1): weak.rect.right += bounce_x
+        else: weak.rect.left = (SCREEN_WIDTH - 1)
+    if weak.rect.centery < strong.rect.centery:
+        if weak.rect.top > bounce_y: weak.rect.top -= bounce_y
+        else: weak.rect.top = 0
+    elif weak.rect.centery > strong.rect.centery:
+        if weak.rect.bottom < (SCREEN_HEIGHT - bounce_y - 1): weak.rect.bottom += bounce_y
+        else: weak.rect.bottom = (SCREEN_HEIGHT - 1)
+    

@@ -24,9 +24,13 @@ while sprites.state != sprites.STATE_CLOSE:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sprites.state = sprites.STATE_CLOSE
-            if event.type == pygame.USEREVENT and event.EventID == "GameOver":
+            elif event.type == pygame.USEREVENT and event.EventID == "GameOver":
                 sprites.state = sprites.STATE_CLOSE
                 gui.init_game_over()
+            elif event.type == pygame.USEREVENT and event.EventID == "L1 Complete":
+                sprites.state = sprites.STATE_INIT
+                mp3.end_music()
+                gui.init_game_done()
         # Key Pressed Handling
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE] or (keys[pygame.K_LALT] and keys[pygame.K_q]): 
@@ -52,3 +56,4 @@ while sprites.state != sprites.STATE_CLOSE:
 #pygame.draw.rect(screen, grün, (pSchiffal.X-25, pSchiffal.Y-25, 50, 50))
 #pygame.draw.circle(screen, rot, (x, y), radius)
 #pyinstaller --onefile --windowed --icon=Game.ico 2DPower.py
+#pyinstaller --onefile --windowed --icon=Game.ico -F 2DPower.py
