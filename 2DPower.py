@@ -55,5 +55,3 @@ while sprites.state != sprites.STATE_CLOSE:
 # Kreis zeichnen
 #pygame.draw.rect(screen, grün, (pSchiffal.X-25, pSchiffal.Y-25, 50, 50))
 #pygame.draw.circle(screen, rot, (x, y), radius)
-#pyinstaller --onefile --windowed --icon=Game.ico 2DPower.py
-#pyinstaller --onefile --windowed --icon=Game.ico -F 2DPower.py
