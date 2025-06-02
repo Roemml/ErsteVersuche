@@ -2,6 +2,8 @@
 import pygame
 import random
 import os
+#Eigene Imports
+import Roemdules.mp3 as mp3
 # Globale Konstanzen
 SCREEN_WIDTH:int = 800 # Breite des Spiel Fensters
 SCREEN_HEIGHT:int = 600 # Höhe des Spiel Fensters
@@ -137,6 +139,7 @@ class Ship(pygame.sprite.Sprite):
                         Ship.hp -= sprite.hp
                         Ship.score += sprite.score
                         sprite.kill()
+                        if (isinstance(sprite, Enemy)): mp3._play_sfx("EnemyEx.mp3")
                 elif (isinstance(sprite, Enemy) and sprite.boss):
                     if self.rect.colliderect(sprite.rect):    
                         Ship.hp -= sprite.damage
@@ -144,6 +147,7 @@ class Ship(pygame.sprite.Sprite):
                         _bounce(self,sprite)
             if Ship.hp <= 0:
                 self.kill()
+                mp3._play_sfx("PlayerEx.mp3")
                 pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'GameOver'}))
 class Laser(pygame.sprite.Sprite):
     """
@@ -175,7 +179,11 @@ class Laser(pygame.sprite.Sprite):
                         if sprite.hp <= 0:
                             Ship.score += sprite.score
                             sprite.kill()
-                            if sprite.boss == True: pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'L1 Complete'}))
+                            if sprite.boss == True: 
+                                pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'L1 Complete'}))
+                                mp3._play_sfx("BossEx.mp3")
+                            else:
+                                mp3._play_sfx("EnemyEx.mp3")
                         self.kill()
 class Enemy(pygame.sprite.Sprite):
     """

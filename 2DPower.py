@@ -17,7 +17,7 @@ while sprites.state != sprites.STATE_CLOSE:
             sprites.level = 1
         # Initialisierung Level
         sprites.init()
-        mp3.start_music("mhb.mp3")
+        mp3.start_music(f"Level{sprites.level}.mp3")
         sprites.state = sprites.STATE_PLAY
     if sprites.state == sprites.STATE_PLAY:
         # Ereignis-Handling
