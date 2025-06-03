@@ -28,12 +28,12 @@ class LaserBase:
     hp:int = 0
     fire_rate:int = 0
 class LaserE1(LaserBase):
-    sprite:str = "LaserE1.png"
+    sprite:str = "data/LaserE1.png"
     speed_x:int = 0
     speed_y:int = 10
     hp:int = 10
 class LaserE2(LaserBase):
-    sprite:str = "LaserE2.png"
+    sprite:str = "data/LaserE2.png"
     speed_x:int = 0
     speed_y:int = 20
     hp:int = 1
@@ -42,7 +42,7 @@ class LaserE2a(LaserE2):
 class LaserE2b(LaserE2):
     speed_x:int = +20
 class LaserEB1(LaserBase):
-    sprite:str = "LaserEB1.png"
+    sprite:str = "data/LaserEB1.png"
     speed_x:int = 0
     speed_y:int = 10
     hp:int = 30
@@ -60,7 +60,7 @@ class Hintergrund(pygame.sprite.Sprite):
         """
         super().__init__()
         self._layer = LAYER_HG
-        _set_image_and_rect(self,"HGTest.png",False)
+        _set_image_and_rect(self,"data/HGTest.png",False)
         self.rect.topleft = (0, 0)
         self.scrolling = bg_scroll
         self.scrolled = 0
@@ -88,7 +88,7 @@ class Ship(pygame.sprite.Sprite):
     hp:int = 500 #Gesundheit des Schiffs
     score:int = 0 # Punkte
     highscore:int = 0 # 
-    explosion_sound = pygame.mixer.Sound("PlayerEx.mp3")
+    explosion_sound = pygame.mixer.Sound("data/PlayerEx.mp3")
     explosion_sound.set_volume(1)
     def __init__(self):
         """
@@ -101,7 +101,7 @@ class Ship(pygame.sprite.Sprite):
         self.shot_cooldown:int = 0 #Cooldown Timer für Schüsse
         self.iframe:int = 0 #Invulnerability Frames
         self._layer = LAYER_SHIP
-        _set_image_and_rect(self,"ship.png")
+        _set_image_and_rect(self,"data/ship.png")
         self.rect.center = (SCREEN_WIDTH / 2, SCREEN_HEIGHT - (self.rect.height * 2))
     def update(self) -> None:
         """
@@ -158,7 +158,7 @@ class Laser(pygame.sprite.Sprite):
     """
     hp:int = 10  #Gesundheit des Lasers
     speed:int = 15 #Geschwindigkeit des Lasers
-    laser_sound = pygame.mixer.Sound("Laser.mp3")
+    laser_sound = pygame.mixer.Sound("data/Laser.mp3")
     laser_sound.set_volume(0.10)
     def __init__(self, shiprect:pygame.Rect):
         """
@@ -166,7 +166,7 @@ class Laser(pygame.sprite.Sprite):
         """
         super().__init__()
         self._layer = LAYER_LASER
-        _set_image_and_rect(self,"Laser1.png")
+        _set_image_and_rect(self,"data/Laser1.png")
         self.rect.bottomleft = (shiprect.left, shiprect.top + 1)
     def update(self) -> None:
         """
@@ -194,7 +194,7 @@ class Enemy(pygame.sprite.Sprite):
     ENEMY_EINS:int = 1 # Erster Gegner
     ENEMY_ZWEI:int = 2 # Zweiter Gegner
     ENEMY_BOSS_EINS:int = 1001 # Erster Boss
-    explosion_sound = pygame.mixer.Sound("EnemyEx.mp3")
+    explosion_sound = pygame.mixer.Sound("data/EnemyEx.mp3")
     explosion_sound.set_volume(0.25)
     def __init__(self, gegnertyp:int):
         """
@@ -204,7 +204,7 @@ class Enemy(pygame.sprite.Sprite):
         self._layer = LAYER_ENEMY
         self.gegnertyp = gegnertyp
         if self.gegnertyp == Enemy.ENEMY_EINS:
-            _set_image_and_rect(self,"Enemy1.png")
+            _set_image_and_rect(self,"data/Enemy1.png")
             self.hp = 20
             self.score = 10
             self.laser = (LaserE1,)
@@ -221,7 +221,7 @@ class Enemy(pygame.sprite.Sprite):
                              (0,2,8))
             self.rect.topleft = (random.randint(0,SCREEN_WIDTH - self.rect.width), 0)
         elif self.gegnertyp == Enemy.ENEMY_ZWEI:
-            _set_image_and_rect(self,"Enemy2.png")
+            _set_image_and_rect(self,"data/Enemy2.png")
             self.hp = 10
             self.score = 5
             self.laser = (LaserE2,LaserE2a,LaserE2b)
@@ -239,15 +239,15 @@ class Enemy(pygame.sprite.Sprite):
                              (-2,1,20))
             self.rect.topleft = (random.randint(0,SCREEN_WIDTH - self.rect.width), 0)
         elif self.gegnertyp == Enemy.ENEMY_BOSS_EINS:
-            _set_image_and_rect(self,"EnemyB1.png")
+            _set_image_and_rect(self,"data/EnemyB1.png")
             self.hp = 2000
             self.score = 100
             self.laser = (LaserEB1,)
             self.fire_rate = 100
             self.boss = True
-            self.explosion_sound = pygame.mixer.Sound("BossEx.mp3")
+            self.explosion_sound = pygame.mixer.Sound("data/BossEx.mp3")
             self.explosion_sound.set_volume(0.25)
-            self.laser_sound = pygame.mixer.Sound("BossLaser.mp3")
+            self.laser_sound = pygame.mixer.Sound("data/BossLaser.mp3")
             self.laser_sound.set_volume(0.10)
             self.damage = 50
             self.init = True
@@ -357,11 +357,11 @@ def init() -> None:
     """
     if level == 1:
         # Überprüfen, ob die Datei existiert und sie leer ist
-        if not os.path.exists("Highscore.bin") or os.path.getsize("Highscore.bin") == 0:
+        if not os.path.exists("data/Highscore.bin") or os.path.getsize("data/Highscore.bin") == 0:
             # Datei existiert nicht oder ist leer, also schreiben wir "0" hinein
-            with open("Highscore.bin", 'w') as file:
+            with open("data/Highscore.bin", 'w') as file:
                 file.write("0")
-        with open("Highscore.bin", 'r') as file:
+        with open("data/Highscore.bin", 'r') as file:
             try:
                 Ship.highscore  = int(file.read())
                 print('Highscore erfolgreich geslesen')
@@ -392,7 +392,7 @@ def enemy_creation() -> None:
             all_sprites.add(Enemy(Enemy.ENEMY_BOSS_EINS))
 def set_new_highscore() -> bool:
     try:
-        with open("Highscore.bin", 'w') as file:
+        with open("data/Highscore.bin", 'w') as file:
             file.write(str(Ship.score))
         print("Highscore erfolgreich geupdated")
         return True

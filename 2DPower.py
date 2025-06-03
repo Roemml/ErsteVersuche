@@ -13,12 +13,12 @@ while sprites.state != sprites.STATE_CLOSE:
             # Initialisierungen pygame
             pygame.init()
             screen: pygame.Surface = pygame.display.set_mode((sprites.SCREEN_WIDTH, sprites.SCREEN_HEIGHT))
-            pygame.display.set_icon(pygame.image.load("Gameico.png"))
+            pygame.display.set_icon(pygame.image.load("data/Gameico.png"))
             pygame.display.set_caption("2D Power")
             sprites.level = 1
         # Initialisierung Level
         sprites.init()
-        bgm = mp3.Music(f"Level{sprites.level}.mp3")
+        bgm = mp3.Music(f"data/Level{sprites.level}.mp3")
         sprites.state = sprites.STATE_PLAY
     if sprites.state == sprites.STATE_PLAY:
         # Ereignis-Handling
