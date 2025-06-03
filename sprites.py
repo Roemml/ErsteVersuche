@@ -87,7 +87,9 @@ class Ship(pygame.sprite.Sprite):
     # Variablen
     hp:int = 500 #Gesundheit des Schiffs
     score:int = 0 # Punkte
-    highscore:int = 0 # Punkte
+    highscore:int = 0 # 
+    explosion_sound = pygame.mixer.Sound("PlayerEx.mp3")
+    explosion_sound.set_volume(1)
     def __init__(self):
         """
         Initialisieren des Schiffs, image und rect setzen.
@@ -125,6 +127,7 @@ class Ship(pygame.sprite.Sprite):
         if keys[pygame.K_LCTRL]:
             if self.shot_cooldown == 0:
                 all_sprites.add(Laser(self.rect))
+                Laser.laser_sound.play()
                 self.shot_cooldown = 5
         # Andere Akionen
         if self.shot_cooldown > 0:
@@ -138,16 +141,16 @@ class Ship(pygame.sprite.Sprite):
                     if self.rect.colliderect(sprite.rect):
                         Ship.hp -= sprite.hp
                         Ship.score += sprite.score
+                        if (isinstance(sprite, Enemy)): sprite.explosion_sound.play() 
                         sprite.kill()
-                        if (isinstance(sprite, Enemy)): mp3._play_sfx("EnemyEx.mp3")
                 elif (isinstance(sprite, Enemy) and sprite.boss):
                     if self.rect.colliderect(sprite.rect):    
                         Ship.hp -= sprite.damage
                         self.iframe = 15
                         _bounce(self,sprite)
             if Ship.hp <= 0:
+                self.explosion_sound.play()
                 self.kill()
-                mp3._play_sfx("PlayerEx.mp3")
                 pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'GameOver'}))
 class Laser(pygame.sprite.Sprite):
     """
@@ -155,6 +158,8 @@ class Laser(pygame.sprite.Sprite):
     """
     hp:int = 10  #Gesundheit des Lasers
     speed:int = 15 #Geschwindigkeit des Lasers
+    laser_sound = pygame.mixer.Sound("Laser.mp3")
+    laser_sound.set_volume(0.10)
     def __init__(self, shiprect:pygame.Rect):
         """
         Initialisieren des Lasers.
@@ -178,12 +183,9 @@ class Laser(pygame.sprite.Sprite):
                         sprite.hp -= self.hp
                         if sprite.hp <= 0:
                             Ship.score += sprite.score
+                            sprite.explosion_sound.play()
                             sprite.kill()
-                            if sprite.boss == True: 
-                                pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'L1 Complete'}))
-                                mp3._play_sfx("BossEx.mp3")
-                            else:
-                                mp3._play_sfx("EnemyEx.mp3")
+                            if sprite.boss == True: pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'L1 Complete'}))
                         self.kill()
 class Enemy(pygame.sprite.Sprite):
     """
@@ -192,7 +194,8 @@ class Enemy(pygame.sprite.Sprite):
     ENEMY_EINS:int = 1 # Erster Gegner
     ENEMY_ZWEI:int = 2 # Zweiter Gegner
     ENEMY_BOSS_EINS:int = 1001 # Erster Boss
-    
+    explosion_sound = pygame.mixer.Sound("EnemyEx.mp3")
+    explosion_sound.set_volume(0.25)
     def __init__(self, gegnertyp:int):
         """
         Initialisieren des Gegners.
@@ -242,6 +245,10 @@ class Enemy(pygame.sprite.Sprite):
             self.laser = (LaserEB1,)
             self.fire_rate = 100
             self.boss = True
+            self.explosion_sound = pygame.mixer.Sound("BossEx.mp3")
+            self.explosion_sound.set_volume(0.25)
+            self.laser_sound = pygame.mixer.Sound("BossLaser.mp3")
+            self.laser_sound.set_volume(0.10)
             self.damage = 50
             self.init = True
             self.speed = 8
@@ -285,6 +292,7 @@ class Enemy(pygame.sprite.Sprite):
             if generate_new_laser < self.fire_rate:
                 global all_sprites
                 for laser in self.laser:
+                    if (self.boss == True): self.laser_sound.play()
                     all_sprites.add(EnemyLaser(self.rect, laser))
 
         #Tod durch Bildschirmaustritt

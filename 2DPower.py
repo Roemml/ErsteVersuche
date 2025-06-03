@@ -4,6 +4,7 @@ import pygame
 import sprites
 import gui
 import Roemdules.mp3 as mp3
+bgm = None
 #Erst "Menü"
 gui.init_start_fenster()
 while sprites.state != sprites.STATE_CLOSE:
@@ -17,7 +18,7 @@ while sprites.state != sprites.STATE_CLOSE:
             sprites.level = 1
         # Initialisierung Level
         sprites.init()
-        mp3.start_music(f"Level{sprites.level}.mp3")
+        bgm = mp3.Music(f"Level{sprites.level}.mp3")
         sprites.state = sprites.STATE_PLAY
     if sprites.state == sprites.STATE_PLAY:
         # Ereignis-Handling
@@ -29,16 +30,16 @@ while sprites.state != sprites.STATE_CLOSE:
                 gui.init_game_over()
             elif event.type == pygame.USEREVENT and event.EventID == "L1 Complete":
                 sprites.state = sprites.STATE_INIT
-                mp3.end_music()
+                bgm.end_music()
                 gui.init_game_done()
         # Key Pressed Handling
         keys = pygame.key.get_pressed()
         if keys[pygame.K_ESCAPE] or (keys[pygame.K_LALT] and keys[pygame.K_q]): 
             sprites.state = sprites.STATE_CLOSE
         if keys[pygame.K_p]:
-            mp3.pause_music()
+            bgm.pause_music()
             gui.init_pause()
-            mp3.resume_music()
+            bgm.resume_music()
     if sprites.state == sprites.STATE_PLAY:
         sprites.enemy_creation()
         sprites.all_sprites.update()
@@ -49,7 +50,7 @@ while sprites.state != sprites.STATE_CLOSE:
     if sprites.state == sprites.STATE_CLOSE:
         try:
             pygame.quit()
-            mp3.end_music()
+            bgm.end_music()
         except:
             pass    
 # Kreis zeichnen
