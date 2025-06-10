@@ -359,11 +359,11 @@ def init() -> None:
         # Überprüfen, ob die Datei existiert und sie leer ist
         if not os.path.exists("data/Highscore.bin") or os.path.getsize("data/Highscore.bin") == 0:
             # Datei existiert nicht oder ist leer, also schreiben wir "0" hinein
-            with open("data/Highscore.bin", 'w') as file:
-                file.write("0")
-        with open("data/Highscore.bin", 'r') as file:
+            with open("data/Highscore.bin", 'wb') as file:
+                file.write(int("0").to_bytes(1, byteorder="big"))
+        with open("data/Highscore.bin", 'rb') as file:
             try:
-                Ship.highscore  = int(file.read())
+                Ship.highscore  = int.from_bytes(file.readline(), byteorder="big")
                 print('Highscore erfolgreich geslesen')
             except:
                 Ship.highscore = 0
@@ -392,8 +392,8 @@ def enemy_creation() -> None:
             all_sprites.add(Enemy(Enemy.ENEMY_BOSS_EINS))
 def set_new_highscore() -> bool:
     try:
-        with open("data/Highscore.bin", 'w') as file:
-            file.write(str(Ship.score))
+        with open("data/Highscore.bin", 'wb') as file:
+            file.write(Ship.score.to_bytes((Ship.score.bit_length()+7)//8, byteorder="big"))
         print("Highscore erfolgreich geupdated")
         return True
     except Exception as e:
