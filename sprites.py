@@ -5,8 +5,8 @@ import os
 #Eigene Imports
 import Roemdules.mp3 as mp3
 # Globale Konstanzen
-SCREEN_WIDTH:int = 800 # Breite des Spiel Fensters
-SCREEN_HEIGHT:int = 600 # Höhe des Spiel Fensters
+SCREEN_WIDTH:int = 1200 # Breite des Spiel Fensters
+SCREEN_HEIGHT:int = 900 # Höhe des Spiel Fensters
 LAYER_HG:int = 0 #Hintergründe sind ganz im Hintergrund
 LAYER_ENEMY:int = 1 #Enemy Layer
 LAYER_SHIP:int = 2 #Schill Layer
@@ -36,7 +36,7 @@ class LaserE2(LaserBase):
     sprite:str = "data/LaserE2.png"
     speed_x:int = 0
     speed_y:int = 20
-    hp:int = 1
+    hp:int = 5
 class LaserE2a(LaserE2):
     speed_x:int = -20
 class LaserE2b(LaserE2):
@@ -53,14 +53,14 @@ class Hintergrund(pygame.sprite.Sprite):
     # Klassen Konstanten
     SCROLL_NO:int = 0 # Der Hintergrund ist statisch
     SCROLL_DOWN:int = 1 # Her Hintergrund scrollt nach unten, man bewegt sich nach oben
-    SCROLL_SPEED:int = 15 # Scrollgeschwindigkeit
+    SCROLL_SPEED:int = 10 # Scrollgeschwindigkeit
     def __init__(self, bg_scroll:int = SCROLL_NO):
         """
         Konstruktor des Hintergrunds.
         """
         super().__init__()
         self._layer = LAYER_HG
-        _set_image_and_rect(self,"data/HGTest.png",False)
+        _set_image_and_rect(self,"data/HG1.png",False)
         self.rect.topleft = (0, 0)
         self.scrolling = bg_scroll
         self.scrolled = 0
@@ -225,7 +225,7 @@ class Enemy(pygame.sprite.Sprite):
             self.hp = 10
             self.score = 5
             self.laser = (LaserE2,LaserE2a,LaserE2b)
-            self.fire_rate = 200
+            self.fire_rate = 75
             self.boss = False
             self.init = False
             self.bewegung = ((-2,1,20),

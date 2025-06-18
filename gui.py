@@ -25,7 +25,7 @@ def init_start_fenster() -> None:
     fenster = erstelle_Fenster({"type":"button", "text":"Start", "command":"startSpiel(fenster)", "width":5, "height":1, "align":ALIGN_CENTER}
                              ,{"type":"label", "text":"Drücke auf Start zum Spiel starten", "align":ALIGN_CENTER}, {"type":"label", "text":"Steuerung:", "align":ALIGN_LEFT}
                              ,{"type":"label", "text":"Pfeiltasten: Bewegen", "align":ALIGN_LEFT}, {"type":"label", "text":"Links STRG: Schießen", "align":ALIGN_LEFT}
-                             ,{"type":"label", "text":"P: Pause:", "align":ALIGN_LEFT}, {"type":"label", "text":"ESC oder Links ALT + Q: Spiel beenden", "align":ALIGN_LEFT}
+                             ,{"type":"label", "text":"P: Pause", "align":ALIGN_LEFT}, {"type":"label", "text":"ESC oder Links ALT + Q: Spiel beenden", "align":ALIGN_LEFT}
                              ,fenster_name = "Start", protocols = (("WM_DELETE_WINDOW", "start_fenster_schliessen(fenster)"),))
     fenster.mainloop()
 def init_pause() -> None:
