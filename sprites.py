@@ -7,19 +7,21 @@ import Roemdules.mp3 as mp3
 # Globale Konstanzen
 SCREEN_WIDTH:int = 1200 # Breite des Spiel Fensters
 SCREEN_HEIGHT:int = 900 # Höhe des Spiel Fensters
+####################################################################
 LAYER_HG:int = 0 #Hintergründe sind ganz im Hintergrund
 LAYER_ENEMY:int = 1 #Enemy Layer
 LAYER_SHIP:int = 2 #Schill Layer
 LAYER_LASER:int = 3 #Laser layer
 LAYER_UI:int = 4 #Layer User Interface
-STATE_CLOSE:int = 0 #Schluss Aus Ende Vorbei
-STATE_INIT:int = 1 #Start 2DPower
-STATE_PLAY:int = 2 #Spiele 2DPower
+####################################################################
 # Globale Variablen
 all_sprites:pygame.sprite.LayeredUpdates = pygame.sprite.LayeredUpdates() # Alle Sprites des Spiels selbst
-state:int = STATE_INIT
-level:int = 0 # Level
-frame_couter:int = 0 #Framecounter
+pause_sprites:pygame.sprite.LayeredUpdates = pygame.sprite.LayeredUpdates() # für Pause Update
+level:int = 1 # Level
+frame_counter:int = 0 #Framecounter
+# init pygame
+pygame.init()
+screen:pygame.Surface = None
 #Enemy Laser Definitionen
 class LaserBase:
     sprite:str = ""
@@ -330,6 +332,16 @@ class UI_Element_Text(pygame.sprite.Sprite):
     #Konstanten
     UI_HP = 0  #Konstante für UI Element Gesundheit
     UI_SCORE = 1 # Konstante für UI Element Score
+    UI_PAUSE1 = 2 #Konstante Für das UI Element PAUSE1
+    UI_PAUSE2 = 3 #Konstante Für das UI Element PAUS2E
+    def _get_color_by_bits(colorbit:int) ->  tuple[int, int, int]:
+        if colorbit < 0 or colorbit > 7:
+            raise Exception("Input int darf nur zwischen 0 und 7 liegen")
+        color_string = f"{colorbit:03b}"
+        r = 255 * int(color_string[0:1])
+        g = 255 * int(color_string[1:2])
+        b = 255 * int(color_string[2:3])
+        return (r, g, b)
     def __init__(self, element:int):
         """
         Initialisierung des UI Elements.
@@ -338,6 +350,19 @@ class UI_Element_Text(pygame.sprite.Sprite):
         self._layer = LAYER_UI
         self.element = element
         self.FONT = pygame.font.Font(None,30)
+        if self.element == UI_Element_Text.UI_PAUSE1 or self.element == UI_Element_Text.UI_PAUSE2:
+            self.FONT = pygame.font.Font(None,60)
+            self.pause_counter = 0
+            self.colorbit = 7
+            self.color = UI_Element_Text._get_color_by_bits(self.colorbit)
+            if self.element == UI_Element_Text.UI_PAUSE1:
+                self.image = self.FONT.render("PAUSE",0,self.color ,None)
+                self.y = 400
+            elif self.element == UI_Element_Text.UI_PAUSE2:
+                self.image = self.FONT.render("P für weiterspielen",0,self.color,None)
+                self.y = 500
+            self.rect = self.image.get_rect()
+            self.rect.topleft = ((SCREEN_WIDTH - self.rect.width) / 2, self.y)
     def update(self) -> None:
         """
         Updatemethode für Handling über eine Sprite Gruppe.
@@ -351,10 +376,33 @@ class UI_Element_Text(pygame.sprite.Sprite):
             self.image = self.FONT.render(f"Punkte: {Ship.score}",0,(255,255,255),None)
             self.rect = self.image.get_rect()
             self.rect.topleft = (0, 0)
+        elif self.element == UI_Element_Text.UI_PAUSE1 or self.element == UI_Element_Text.UI_PAUSE2:
+            if self.pause_counter >= 10:
+                self.pause_counter = 0
+                self.colorbit = 7 if self.colorbit == 0 else self.colorbit - 1
+                self.color = UI_Element_Text._get_color_by_bits(self.colorbit)
+            else:
+                self.pause_counter += 1
+            if self.element == UI_Element_Text.UI_PAUSE1:
+                self.image = self.FONT.render("PAUSE",0,self.color,None)
+            elif self.element == UI_Element_Text.UI_PAUSE2:
+                self.image = self.FONT.render("P für weiterspielen",0,self.color,None)
+    def init(self) -> None:
+        if self.element == UI_Element_Text.UI_PAUSE1 or self.element == UI_Element_Text.UI_PAUSE2:
+            self.pause_counter = 0
+            self.colorbit = 7
+            self.color = UI_Element_Text._get_color_by_bits(self.colorbit)
+pause1:UI_Element_Text = UI_Element_Text(UI_Element_Text.UI_PAUSE1)
+pause2:UI_Element_Text = UI_Element_Text(UI_Element_Text.UI_PAUSE2)
 def init() -> None:
     """
     Genereller Spielstart.
     """
+    global screen
+    if screen is None:
+        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        pygame.display.set_icon(pygame.image.load("data/Gameico.png"))
+        pygame.display.set_caption("2D Power")
     if level == 1:
         # Überprüfen, ob die Datei existiert und sie leer ist
         if not os.path.exists("data/Highscore.bin") or os.path.getsize("data/Highscore.bin") == 0:
@@ -369,27 +417,46 @@ def init() -> None:
                 Ship.highscore = 0
                 print('Highscore manuell auf 0 gesetzt')
         ship = Ship()
-    global all_sprites, frame_couter
-    frame_couter = 0
+    global all_sprites, frame_counter, pause_sprite
+    frame_counter = 0
     all_sprites.empty()
     all_sprites.add(Hintergrund(Hintergrund.SCROLL_DOWN), ship,UI_Element_Text(UI_Element_Text.UI_HP), UI_Element_Text(UI_Element_Text.UI_SCORE))
 def enemy_creation() -> None:
     """
     Hier werden die Gegner erzeugt.
     """
-    global all_sprites
+    global all_sprites, frame_counter
     generate_new_enemy = random.randint(0,1000)
     if level == 1:
-        if frame_couter < 900:
+        if frame_counter < 900:
             if generate_new_enemy < 20:
                 all_sprites.add(Enemy(Enemy.ENEMY_EINS))
-        elif frame_couter < 3000:
+        elif frame_counter < 3000:
             if generate_new_enemy < 10:
                 all_sprites.add(Enemy(Enemy.ENEMY_EINS))
-            elif generate_new_enemy < 40:
+            elif generate_new_enemy < 30:
                 all_sprites.add(Enemy(Enemy.ENEMY_ZWEI))
-        elif frame_couter == 3300:
+        elif frame_counter == 3500:
             all_sprites.add(Enemy(Enemy.ENEMY_BOSS_EINS))
+def pause() -> None:
+    pause1.init();pause2.init()
+    all_sprites.add(pause1,pause2)
+    pause_sprites.add(pause1,pause2)
+def resume() -> None:
+    pause1.kill()
+    pause2.kill()
+def update(running:bool = True):
+    if running:
+        global frame_counter
+        enemy_creation()
+        all_sprites.update()
+        frame_counter += 1
+    else:
+        pause_sprites.update()
+    screen.fill((0, 0, 0))
+    all_sprites.draw(screen)
+    pygame.display.flip()
+    # pygame.time.Clock().tick(60)
 def set_new_highscore() -> bool:
     try:
         with open("data/Highscore.bin", 'wb') as file:
