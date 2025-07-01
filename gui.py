@@ -3,8 +3,6 @@ import tkinter as tk
 #Eigene Imports
 import sprites
 import  Roemdules.gui as Roemgui
-#Globalle Konstanzen
-#Globale Variablen
 #Methoden
 def startSpiel(fenster:tk.Tk) -> None:
     """
