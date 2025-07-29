@@ -58,7 +58,7 @@ while not game_state.isClose():
     if game_state.isInit():
         # Initialisierung Level
         sprites.init()
-        bgm = mp3.Music(f"data/Level{sprites.Sprites.level}.mp3")
+        bgm = mp3.Music(f"{sprites.Sprites.DATA_DIR}Level{sprites.Sprites.level}.mp3")
         game_state.play()
     elif game_state.isPlay():
         sprites.update()

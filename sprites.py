@@ -6,6 +6,7 @@ import os
 import Roemdules.mp3 as mp3
 pygame.init()
 class Sprites:
+    DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "")
     SCREEN_WIDTH:int = 1200 # Breite des Spiel Fensters
     SCREEN_HEIGHT:int = 900 # Höhe des Spiel Fensters
     ####################################################################
@@ -30,12 +31,12 @@ class LaserBase:
     hp:int = 0
     fire_rate:int = 0
 class LaserE1(LaserBase):
-    sprite:str = "data/LaserE1.png"
+    sprite:str = f"{Sprites.DATA_DIR}LaserE1.png"
     speed_x:int = 0
     speed_y:int = 10
     hp:int = 10
 class LaserE2(LaserBase):
-    sprite:str = "data/LaserE2.png"
+    sprite:str = f"{Sprites.DATA_DIR}LaserE2.png"
     speed_x:int = 0
     speed_y:int = 20
     hp:int = 5
@@ -44,7 +45,7 @@ class LaserE2a(LaserE2):
 class LaserE2b(LaserE2):
     speed_x:int = +20
 class LaserEB1(LaserBase):
-    sprite:str = "data/LaserEB1.png"
+    sprite:str = f"{Sprites.DATA_DIR}LaserEB1.png"
     speed_x:int = 0
     speed_y:int = 10
     hp:int = 30
@@ -62,7 +63,7 @@ class Hintergrund(pygame.sprite.Sprite):
         """
         super().__init__()
         self._layer = Sprites.LAYER_HG
-        _set_image_and_rect(self,f"data/HG{Sprites.level}.png",False)
+        _set_image_and_rect(self,f"{Sprites.DATA_DIR}HG{Sprites.level}.png",False)
         self.rect.topleft = (0, 0)
         self.scrolling = bg_scroll
         self.scrolled = 0
@@ -90,7 +91,7 @@ class Ship(pygame.sprite.Sprite):
     hp:int = 500 #Gesundheit des Schiffs
     score:int = 0 # Punkte
     highscore:int = 0 # 
-    explosion_sound = pygame.mixer.Sound("data/PlayerEx.mp3")
+    explosion_sound = pygame.mixer.Sound(f"{Sprites.DATA_DIR}PlayerEx.mp3")
     explosion_sound.set_volume(1)
     def __init__(self):
         """
@@ -103,7 +104,7 @@ class Ship(pygame.sprite.Sprite):
         self.shot_cooldown:int = 0 #Cooldown Timer für Schüsse
         self.iframe:int = 0 #Invulnerability Frames
         self._layer = Sprites.LAYER_SHIP
-        _set_image_and_rect(self,"data/ship.png")
+        _set_image_and_rect(self,f"{Sprites.DATA_DIR}ship.png")
         self.rect.center = (Sprites.SCREEN_WIDTH / 2, Sprites.SCREEN_HEIGHT - (self.rect.height * 2))
     def update(self) -> None:
         """
@@ -159,7 +160,7 @@ class Laser(pygame.sprite.Sprite):
     """
     hp:int = 10  #Gesundheit des Lasers
     speed:int = 20 #Geschwindigkeit des Lasers
-    laser_sound = pygame.mixer.Sound("data/Laser.mp3")
+    laser_sound = pygame.mixer.Sound(f"{Sprites.DATA_DIR}Laser.mp3")
     laser_sound.set_volume(0.10)
     def __init__(self, shiprect:pygame.Rect):
         """
@@ -167,7 +168,7 @@ class Laser(pygame.sprite.Sprite):
         """
         super().__init__()
         self._layer = Sprites.LAYER_LASER
-        _set_image_and_rect(self,"data/Laser1.png")
+        _set_image_and_rect(self,f"{Sprites.DATA_DIR}Laser1.png")
         self.rect.bottomleft = (shiprect.left, shiprect.top + 1)
     def update(self) -> None:
         """
@@ -194,7 +195,7 @@ class Enemy(pygame.sprite.Sprite):
     ENEMY_EINS:int = 1 # Erster Gegner
     ENEMY_ZWEI:int = 2 # Zweiter Gegner
     ENEMY_BOSS_EINS:int = 1001 # Erster Boss
-    explosion_sound = pygame.mixer.Sound("data/EnemyEx.mp3")
+    explosion_sound = pygame.mixer.Sound(f"{Sprites.DATA_DIR}EnemyEx.mp3")
     explosion_sound.set_volume(0.25)
     def __init__(self, gegnertyp:int):
         """
@@ -204,7 +205,7 @@ class Enemy(pygame.sprite.Sprite):
         self._layer = Sprites.LAYER_ENEMY
         self.gegnertyp = gegnertyp
         if self.gegnertyp == Enemy.ENEMY_EINS:
-            _set_image_and_rect(self,"data/Enemy1.png")
+            _set_image_and_rect(self,f"{Sprites.DATA_DIR}Enemy1.png")
             self.hp = 20
             self.score = 10
             self.laser = (LaserE1,)
@@ -221,7 +222,7 @@ class Enemy(pygame.sprite.Sprite):
                              (0,2,8))
             self.rect.topleft = (random.randint(0,Sprites.SCREEN_WIDTH - self.rect.width), 0)
         elif self.gegnertyp == Enemy.ENEMY_ZWEI:
-            _set_image_and_rect(self,"data/Enemy2.png")
+            _set_image_and_rect(self,f"{Sprites.DATA_DIR}Enemy2.png")
             self.hp = 10
             self.score = 5
             self.laser = (LaserE2,LaserE2a,LaserE2b)
@@ -239,15 +240,15 @@ class Enemy(pygame.sprite.Sprite):
                              (-2,1,20))
             self.rect.topleft = (random.randint(0,Sprites.SCREEN_WIDTH - self.rect.width), 0)
         elif self.gegnertyp == Enemy.ENEMY_BOSS_EINS:
-            _set_image_and_rect(self,"data/EnemyB1.png")
+            _set_image_and_rect(self,f"{Sprites.DATA_DIR}EnemyB1.png")
             self.hp = 2000
             self.score = 100
             self.laser = (LaserEB1,)
             self.fire_rate = 100
             self.boss = True
-            self.explosion_sound = pygame.mixer.Sound("data/BossEx.mp3")
+            self.explosion_sound = pygame.mixer.Sound(f"{Sprites.DATA_DIR}BossEx.mp3")
             self.explosion_sound.set_volume(0.25)
-            self.laser_sound = pygame.mixer.Sound("data/BossLaser.mp3")
+            self.laser_sound = pygame.mixer.Sound(f"{Sprites.DATA_DIR}BossLaser.mp3")
             self.laser_sound.set_volume(0.10)
             self.damage = 50
             self.init = True
@@ -394,7 +395,7 @@ def init() -> None:
     """
     if Sprites.screen is None:
         Sprites.screen = pygame.display.set_mode((Sprites.SCREEN_WIDTH, Sprites.SCREEN_HEIGHT))
-        pygame.display.set_icon(pygame.image.load("data/Gameico.png"))
+        pygame.display.set_icon(pygame.image.load(f"{Sprites.DATA_DIR}Gameico.png"))
         pygame.display.set_caption("2D Power")
     if Sprites.pause1 is None: 
         Sprites.pause1 = UI_Element_Text(UI_Element_Text.UI_PAUSE1)
@@ -402,11 +403,11 @@ def init() -> None:
         Sprites.pause2 = UI_Element_Text(UI_Element_Text.UI_PAUSE2)
     if Sprites.level == 1:
         # Überprüfen, ob die Datei existiert und sie leer ist
-        if not os.path.exists("data/Highscore.bin") or os.path.getsize("data/Highscore.bin") == 0:
+        if not os.path.exists(f"{Sprites.DATA_DIR}Highscore.bin") or os.path.getsize(f"{Sprites.DATA_DIR}Highscore.bin") == 0:
             # Datei existiert nicht oder ist leer, also schreiben wir "0" hinein
-            with open("data/Highscore.bin", 'wb') as file:
+            with open(f"{Sprites.DATA_DIR}Highscore.bin", 'wb') as file:
                 file.write(int("0").to_bytes(1, byteorder="big"))
-        with open("data/Highscore.bin", 'rb') as file:
+        with open(f"{Sprites.DATA_DIR}Highscore.bin", 'rb') as file:
             try:
                 Ship.highscore  = int.from_bytes(file.readline(), byteorder="big")
                 print('Highscore erfolgreich geslesen')
@@ -453,7 +454,7 @@ def update(running:bool = True):
     # pygame.time.Clock().tick(60)
 def set_new_highscore() -> bool:
     try:
-        with open("data/Highscore.bin", 'wb') as file:
+        with open(f"{Sprites.DATA_DIR}Highscore.bin", 'wb') as file:
             file.write(Ship.score.to_bytes((Ship.score.bit_length()+7)//8, byteorder="big"))
         print("Highscore erfolgreich geupdated")
         return True
