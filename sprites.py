@@ -57,7 +57,7 @@ class Hintergrund(pygame.sprite.Sprite):
     SCROLL_NO:int = 0 # Der Hintergrund ist statisch
     SCROLL_DOWN:int = 1 # Her Hintergrund scrollt nach unten, man bewegt sich nach oben
     SCROLL_SPEED:int = 10 # Scrollgeschwindigkeit
-    def __init__(self, bg_scroll:int = SCROLL_NO):
+    def __init__(self, bg_scroll:int = SCROLL_NO, second_bg:bool = False):
         """
         Konstruktor des Hintergrunds.
         """
@@ -66,23 +66,22 @@ class Hintergrund(pygame.sprite.Sprite):
         _set_image_and_rect(self,f"{Sprites.DATA_DIR}HG{Sprites.level}.png",False)
         self.rect.topleft = (0, 0)
         self.scrolling = bg_scroll
-        self.scrolled = 0
+        self.height = self.image.get_height()
         # Attribute, die nur für scrollende Hintergründe benötigt werden
         if not self.scrolling == Hintergrund.SCROLL_NO:
-            self.image_unscrolled = self.image.copy()
-            if self.scrolling == Hintergrund.SCROLL_DOWN:
-                self.rect.top = -(self.image.get_height() - Sprites.SCREEN_HEIGHT)
+            if self.scrolling == Hintergrund.SCROLL_DOWN and second_bg == True:
+                self.rect.top = -self.height
     def update(self) -> None:
         """
         Updatemethode für Handling über eine Sprite Gruppe.
         """
         if self.scrolling == Hintergrund.SCROLL_DOWN:
-            self.image.scroll(dy = Hintergrund.SCROLL_SPEED)
-            self.scrolled += Hintergrund.SCROLL_SPEED
-            # Wenn der Hintergrund am Ende angelangt ist, muss er wieder neu gesetzt werden, hier aus der Kopie des Original Images
-            if self.scrolled >= self.image.get_height() - Sprites.SCREEN_HEIGHT:
-                self.image = self.image_unscrolled.copy()
-                self.scrolled = 0
+            self.rect.y += Hintergrund.SCROLL_SPEED
+            
+            # self.scrolled += Hintergrund.SCROLL_SPEED
+            # Wenn der Hintergrund am Ende angelangt ist, muss er wieder neu gesetzt werden
+            if self.rect.top >= self.height:
+                self.rect.y = -self.height + (self.rect.y - self.height)
 class Ship(pygame.sprite.Sprite):
     """
     Dies ist ein Schiff.
@@ -417,7 +416,7 @@ def init() -> None:
         ship = Ship()
     Sprites.frame_counter = 0
     Sprites.all_sprites.empty()
-    Sprites.all_sprites.add(Hintergrund(Hintergrund.SCROLL_DOWN), ship,UI_Element_Text(UI_Element_Text.UI_HP), UI_Element_Text(UI_Element_Text.UI_SCORE))
+    Sprites.all_sprites.add(Hintergrund(Hintergrund.SCROLL_DOWN),Hintergrund(Hintergrund.SCROLL_DOWN,True), ship,UI_Element_Text(UI_Element_Text.UI_HP), UI_Element_Text(UI_Element_Text.UI_SCORE))
 def enemy_creation() -> None:
     """
     Hier werden die Gegner erzeugt.
@@ -461,10 +460,19 @@ def set_new_highscore() -> bool:
     except Exception as e:
         print(f"Highscore nicht erfolgreich geupdated: {e}")
         return False
-def _set_image_and_rect(sprite:pygame.sprite.Sprite,image:str,set_colorkey:bool = True,colorkey:tuple[int, int, int] = (255, 255, 255)):
-        sprite.image = pygame.image.load(image)
+def _set_image_and_rect(sprite:pygame.sprite.Sprite,image:str | pygame.Surface ,set_colorkey:bool = True,colorkey:tuple[int, int, int] = (255, 255, 255)):
+        
         if set_colorkey:
+            if (isinstance(image, str)):
+                sprite.image = pygame.image.load(image).convert_alpha()
+            else:
+                sprite.image = image
             sprite.image.set_colorkey(colorkey)
+        else:
+            if (isinstance(image, str)):
+                sprite.image = pygame.image.load(image).convert()
+            else:
+                sprite.image = image
         sprite.rect = sprite.image.get_rect()
 def _bounce(weak:pygame.sprite.Sprite,strong:pygame.sprite.Sprite,bounce_x:int = 50, bounce_y:int = 50):
     if weak.rect.centerx < strong.rect.centerx:
