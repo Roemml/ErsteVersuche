@@ -7,7 +7,9 @@ import Roemdules.mp3 as mp3
 import game
 pygame.init()
 class Sprites:
-    GAME_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "")
+    GAME_DIR = os.path.join(".", "")
+    if not "data" in os.listdir(GAME_DIR):
+        GAME_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "")
     DATA_DIR = os.path.join(GAME_DIR, "data", "")
     SCREEN_WIDTH:int = 1200 # Breite des Spiel Fensters
     SCREEN_HEIGHT:int = 900 # Höhe des Spiel Fensters
@@ -19,7 +21,6 @@ class Sprites:
     LAYER_UI:int = 4 #Layer User Interface
     ####################################################################
     all_sprites:pygame.sprite.LayeredUpdates = pygame.sprite.LayeredUpdates() # Alle Sprites des Spiels selbst
-    pause_sprites:pygame.sprite.LayeredUpdates = pygame.sprite.LayeredUpdates() # für Pause Update
     level:int = 1 # Level
     frame_counter:int = 0 #Framecounter
     screen:pygame.Surface = None
@@ -73,11 +74,11 @@ class Hintergrund(pygame.sprite.Sprite):
         if not self.scrolling == Hintergrund.SCROLL_NO:
             if self.scrolling == Hintergrund.SCROLL_DOWN and second_bg == True:
                 self.rect.top = -self.height
-    def update(self) -> None:
+    def update(self, running) -> None:
         """
         Updatemethode für Handling über eine Sprite Gruppe.
         """
-        if self.scrolling == Hintergrund.SCROLL_DOWN:
+        if running and self.scrolling == Hintergrund.SCROLL_DOWN:
             self.rect.y += Hintergrund.SCROLL_SPEED
             
             # self.scrolled += Hintergrund.SCROLL_SPEED
@@ -107,54 +108,55 @@ class Ship(pygame.sprite.Sprite):
         self._layer = Sprites.LAYER_SHIP
         _set_image_and_rect(self,f"{Sprites.DATA_DIR}ship.png")
         self.rect.center = (Sprites.SCREEN_WIDTH / 2, Sprites.SCREEN_HEIGHT - (self.rect.height * 2))
-    def update(self) -> None:
+    def update(self, running) -> None:
         """
         Updatemethode für Handling über eine Sprite Gruppe.
         """
-        # Tastenaktionen
-        if self.iframe == 0: curr_speed = self.speed
-        else: curr_speed = (self.speed // 4)
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
-            if self.rect.left > curr_speed:
-                self.rect.x -= curr_speed
-        if keys[pygame.K_RIGHT]:
-            if self.rect.right < Sprites.SCREEN_WIDTH - curr_speed:
-                self.rect.x += curr_speed
-        if keys[pygame.K_UP]:
-            if self.rect.top > curr_speed:    
-                self.rect.y -= curr_speed
-        if keys[pygame.K_DOWN]:
-            if self.rect.bottom < Sprites.SCREEN_HEIGHT - curr_speed:
-                self.rect.y += curr_speed
-        if keys[pygame.K_LCTRL]:
-            if self.shot_cooldown == 0:
-                Sprites.all_sprites.add(Laser(self.rect))
-                Laser.laser_sound.play()
-                self.shot_cooldown = 4
-        # Andere Akionen
-        if self.shot_cooldown > 0:
-            self.shot_cooldown -= 1
-        if self.iframe > 0:
-            self.iframe -= 1
-        #Kollisionen
-        if self.iframe == 0:
-            for sprite in Sprites.all_sprites.sprites():
-                if (isinstance(sprite, Enemy) and not sprite.boss) or isinstance(sprite, EnemyLaser):
-                    if self.rect.colliderect(sprite.rect):
-                        Ship.hp -= sprite.hp
-                        Ship.score += sprite.score
-                        if (isinstance(sprite, Enemy)): sprite.explosion_sound.play() 
-                        sprite.kill()
-                elif (isinstance(sprite, Enemy) and sprite.boss):
-                    if self.rect.colliderect(sprite.rect):    
-                        Ship.hp -= sprite.damage
-                        self.iframe = 15
-                        _bounce(self,sprite)
-            if Ship.hp <= 0:
-                self.explosion_sound.play()
-                self.kill()
-                pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'GameOver'}))
+        if running:
+            # Tastenaktionen
+            if self.iframe == 0: curr_speed = self.speed
+            else: curr_speed = (self.speed // 4)
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT]:
+                if self.rect.left > curr_speed:
+                    self.rect.x -= curr_speed
+            if keys[pygame.K_RIGHT]:
+                if self.rect.right < Sprites.SCREEN_WIDTH - curr_speed:
+                    self.rect.x += curr_speed
+            if keys[pygame.K_UP]:
+                if self.rect.top > curr_speed:    
+                    self.rect.y -= curr_speed
+            if keys[pygame.K_DOWN]:
+                if self.rect.bottom < Sprites.SCREEN_HEIGHT - curr_speed:
+                    self.rect.y += curr_speed
+            if keys[pygame.K_LCTRL]:
+                if self.shot_cooldown == 0:
+                    Sprites.all_sprites.add(Laser(self.rect))
+                    Laser.laser_sound.play()
+                    self.shot_cooldown = 4
+            # Andere Akionen
+            if self.shot_cooldown > 0:
+                self.shot_cooldown -= 1
+            if self.iframe > 0:
+                self.iframe -= 1
+            #Kollisionen
+            if self.iframe == 0:
+                for sprite in Sprites.all_sprites.sprites():
+                    if (isinstance(sprite, Enemy) and not sprite.boss) or isinstance(sprite, EnemyLaser):
+                        if self.rect.colliderect(sprite.rect):
+                            Ship.hp -= sprite.hp
+                            Ship.score += sprite.score
+                            if (isinstance(sprite, Enemy)): sprite.explosion_sound.play() 
+                            sprite.kill()
+                    elif (isinstance(sprite, Enemy) and sprite.boss):
+                        if self.rect.colliderect(sprite.rect):    
+                            Ship.hp -= sprite.damage
+                            self.iframe = 15
+                            _bounce(self,sprite)
+                if Ship.hp <= 0:
+                    self.explosion_sound.play()
+                    self.kill()
+                    pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'GameOver'}))
 class Laser(pygame.sprite.Sprite):
     """
     Dies ist ein Laser des Schiffs.
@@ -171,24 +173,25 @@ class Laser(pygame.sprite.Sprite):
         self._layer = Sprites.LAYER_LASER
         _set_image_and_rect(self,f"{Sprites.DATA_DIR}Laser1.png")
         self.rect.bottomleft = (shiprect.left, shiprect.top + 1)
-    def update(self) -> None:
+    def update(self, running) -> None:
         """
         Updatemethode für Handling über eine Sprite Gruppe.
         """
-        self.rect.top -= self.speed
-        if self.rect.bottom < 0:
-            self.kill()
-        else:
-            for sprite in Sprites.all_sprites.sprites():
-                if isinstance(sprite, Enemy):
-                    if self.rect.colliderect(sprite.rect):
-                        sprite.hp -= self.hp
-                        if sprite.hp <= 0:
-                            Ship.score += sprite.score
-                            sprite.explosion_sound.play()
-                            sprite.kill()
-                            if sprite.boss == True: pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'L1 Complete'}))
-                        self.kill()
+        if running:
+            self.rect.top -= self.speed
+            if self.rect.bottom < 0:
+                self.kill()
+            else:
+                for sprite in Sprites.all_sprites.sprites():
+                    if isinstance(sprite, Enemy):
+                        if self.rect.colliderect(sprite.rect):
+                            sprite.hp -= self.hp
+                            if sprite.hp <= 0:
+                                Ship.score += sprite.score
+                                sprite.explosion_sound.play()
+                                sprite.kill()
+                                if sprite.boss == True: pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'EventID': 'L1 Complete'}))
+                            self.kill()
 class Enemy(pygame.sprite.Sprite):
     """
     Hier werden alle Gegner instanziert.
@@ -270,35 +273,36 @@ class Enemy(pygame.sprite.Sprite):
         self.bewegungs_wiederholungen = self.bewegung[0][2]
         self.bewegungs_counter = 0
 
-    def update(self) -> None:
+    def update(self, running) -> None:
         """
         Updatemethode für Handling über eine Sprite Gruppe.
         """
-        # Bewegung
-        if self.init == False:
-            self.rect.x += self.bewegung[self.bewegungs_counter][0]
-            self.rect.y += self.bewegung[self.bewegungs_counter][1]
-            self.bewegungs_wiederholungen -= 1
-            if self.bewegungs_wiederholungen < 1:
-                self.bewegungs_counter += 1
-                if self.bewegungs_counter >= len(self.bewegung):
-                    self.bewegungs_counter = 0
-                self.bewegungs_wiederholungen = self.bewegung[self.bewegungs_counter][2]
-        else:
-            self.rect.y += 2
-            if self.rect.top >= 0:
-                self.init = False
-        #Schuss
-        if self.laser != None:
-            generate_new_laser = random.randint(0,1000)
-            if generate_new_laser < self.fire_rate:
-                for laser in self.laser:
-                    if (self.boss == True): self.laser_sound.play()
-                    Sprites.all_sprites.add(EnemyLaser(self.rect, laser))
+        if running:
+            # Bewegung  
+            if self.init == False:
+                self.rect.x += self.bewegung[self.bewegungs_counter][0]
+                self.rect.y += self.bewegung[self.bewegungs_counter][1]
+                self.bewegungs_wiederholungen -= 1
+                if self.bewegungs_wiederholungen < 1:
+                    self.bewegungs_counter += 1
+                    if self.bewegungs_counter >= len(self.bewegung):
+                        self.bewegungs_counter = 0
+                    self.bewegungs_wiederholungen = self.bewegung[self.bewegungs_counter][2]
+            else:
+                self.rect.y += 2
+                if self.rect.top >= 0:
+                    self.init = False
+            #Schuss
+            if self.laser != None:
+                generate_new_laser = random.randint(0,1000)
+                if generate_new_laser < self.fire_rate:
+                    for laser in self.laser:
+                        if (self.boss == True): self.laser_sound.play()
+                        Sprites.all_sprites.add(EnemyLaser(self.rect, laser))
 
-        #Tod durch Bildschirmaustritt
-        if self.rect.top > Sprites.SCREEN_HEIGHT or self.rect.bottom < 0 or self.rect.left > Sprites.SCREEN_WIDTH or self.rect.right < 0:
-            self.kill()
+            #Tod durch Bildschirmaustritt
+            if self.rect.top > Sprites.SCREEN_HEIGHT or self.rect.bottom < 0 or self.rect.left > Sprites.SCREEN_WIDTH or self.rect.right < 0:
+                self.kill()
 class EnemyLaser(pygame.sprite.Sprite):
     """
     Dies ist ein Laser eines Gegners.
@@ -316,14 +320,15 @@ class EnemyLaser(pygame.sprite.Sprite):
         self.speed_x = enemy_laser.speed_x
         self.speed_y = enemy_laser.speed_y
         self.hp = enemy_laser.hp
-    def update(self) -> None:
+    def update(self, running) -> None:
         """
         Updatemethode für Handling über eine Sprite Gruppe.
         """
-        self.rect.top += self.speed_y
-        self.rect.left += self.speed_x
-        if self.rect.top > Sprites.SCREEN_HEIGHT or self.rect.right < 0 or self.rect.left > Sprites.SCREEN_WIDTH:
-            self.kill()
+        if running:
+            self.rect.top += self.speed_y
+            self.rect.left += self.speed_x
+            if self.rect.top > Sprites.SCREEN_HEIGHT or self.rect.right < 0 or self.rect.left > Sprites.SCREEN_WIDTH:
+                self.kill()
 class UI_Element_Text(pygame.sprite.Sprite):
     """
     Hier werden alle UI Textelemente instanziert.
@@ -362,20 +367,20 @@ class UI_Element_Text(pygame.sprite.Sprite):
                 self.y = 500
             self.rect = self.image.get_rect()
             self.rect.topleft = ((Sprites.SCREEN_WIDTH - self.rect.width) / 2, self.y)
-    def update(self) -> None:
+    def update(self, running) -> None:
         """
         Updatemethode für Handling über eine Sprite Gruppe.
         """
-        if self.element == UI_Element_Text.UI_HP:
+        if running and self.element == UI_Element_Text.UI_HP:
             self.image = self.FONT.render(f"HP: {Ship.hp}",0,(255,255,255),None)
             self.rect = self.image.get_rect()
             self.rect.topleft = (0, 20)
-        elif self.element == UI_Element_Text.UI_SCORE:
+        elif running and self.element == UI_Element_Text.UI_SCORE:
             self.image = self.FONT.render(f"Punkte: {Ship.score}",0,(255,255,255),None)
             self.rect = self.image.get_rect()
             self.rect.topleft = (0, 0)
-        elif self.element == UI_Element_Text.UI_PAUSE1 or self.element == UI_Element_Text.UI_PAUSE2:
-            if self.pause_counter >= 10:
+        elif not running and (self.element == UI_Element_Text.UI_PAUSE1 or self.element == UI_Element_Text.UI_PAUSE2):
+            if self.pause_counter >= 15:
                 self.pause_counter = 0
                 self.colorbit = 7 if self.colorbit == 0 else self.colorbit - 1
                 self.color = UI_Element_Text._get_color_by_bits(self.colorbit)
@@ -438,21 +443,9 @@ def enemy_creation() -> None:
 def pause() -> None:
     Sprites.pause1.init();Sprites.pause2.init()
     Sprites.all_sprites.add(Sprites.pause1,Sprites.pause2)
-    Sprites.pause_sprites.add(Sprites.pause1,Sprites.pause2)
 def resume() -> None:
     Sprites.pause1.kill()
     Sprites.pause2.kill()
-def update(running:bool = True):
-    if running:
-        enemy_creation()
-        Sprites.all_sprites.update()
-        Sprites.frame_counter += 1
-    else:
-        Sprites.pause_sprites.update()
-    Sprites.screen.fill((0, 0, 0))
-    Sprites.all_sprites.draw(Sprites.screen)
-    pygame.display.flip()
-    # pygame.time.Clock().tick(60)
 def set_new_highscore() -> bool:
     try:
         with open(f"{Sprites.DATA_DIR}Highscore.bin", 'wb') as file:

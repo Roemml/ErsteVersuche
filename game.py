@@ -31,6 +31,11 @@ class status:
         self.status = self.STATE_PLAY
     def isPlay(self) -> bool:
         return self.status == self.STATE_PLAY
+def _update_and_draw_sprites(running:bool = True):
+    sprites.Sprites.all_sprites.update(running)
+    sprites.Sprites.screen.fill((0, 0, 0))
+    sprites.Sprites.all_sprites.draw(sprites.Sprites.screen)
+    pygame.display.flip()
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Ein einfaches 2D Weltraum shooter Spiel")
     parser.add_argument('--debug', '-d', help="set logging level to debug",dest='debug', action='store_true')
@@ -73,7 +78,9 @@ if __name__ == "__main__":
             bgm = mp3.Music(f"{sprites.Sprites.DATA_DIR}Level{sprites.Sprites.level}.mp3")
             game_state.play()
         elif game_state.isPlay():
-            sprites.update()
+            _update_and_draw_sprites(True)
+            sprites.enemy_creation()
+            sprites.Sprites.frame_counter += 1
             # Ereignis-Handling
             for event in events:
                 if event.type == pygame.QUIT:
@@ -86,7 +93,7 @@ if __name__ == "__main__":
                     bgm.end_music()
                     gui.init_game_done(game_state)
         elif game_state.isPause():
-            sprites.update(False)
+            _update_and_draw_sprites(False)
         if game_state.isClose():
             try:
                 pygame.quit()
