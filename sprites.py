@@ -4,9 +4,11 @@ import random
 import os
 #Eigene Imports
 import Roemdules.mp3 as mp3
+import game
 pygame.init()
 class Sprites:
-    DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "")
+    GAME_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "")
+    DATA_DIR = os.path.join(GAME_DIR, "data", "")
     SCREEN_WIDTH:int = 1200 # Breite des Spiel Fensters
     SCREEN_HEIGHT:int = 900 # Höhe des Spiel Fensters
     ####################################################################
@@ -409,10 +411,10 @@ def init() -> None:
         with open(f"{Sprites.DATA_DIR}Highscore.bin", 'rb') as file:
             try:
                 Ship.highscore  = int.from_bytes(file.readline(), byteorder="big")
-                print('Highscore erfolgreich geslesen')
+                game.logging.info('Highscore erfolgreich geslesen')
             except:
                 Ship.highscore = 0
-                print('Highscore manuell auf 0 gesetzt')
+                game.logging.info('Highscore manuell auf 0 gesetzt')
         ship = Ship()
     Sprites.frame_counter = 0
     Sprites.all_sprites.empty()
@@ -455,10 +457,10 @@ def set_new_highscore() -> bool:
     try:
         with open(f"{Sprites.DATA_DIR}Highscore.bin", 'wb') as file:
             file.write(Ship.score.to_bytes((Ship.score.bit_length()+7)//8, byteorder="big"))
-        print("Highscore erfolgreich geupdated")
+        game.logging.info("Highscore erfolgreich geupdated")
         return True
     except Exception as e:
-        print(f"Highscore nicht erfolgreich geupdated: {e}")
+        game.logging.error(f"Highscore nicht erfolgreich geupdated: {e}")
         return False
 def _set_image_and_rect(sprite:pygame.sprite.Sprite,image:str | pygame.Surface ,set_colorkey:bool = True,colorkey:tuple[int, int, int] = (255, 255, 255)):
         

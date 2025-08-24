@@ -180,5 +180,7 @@ Test.py
 #Highscore bei direkten Tests
 Highscore.*
 highscore.*
+#Logging Dateien
+*.log
 # Ausnahme für crypt.pyc, diese Datei soll nicht ignoriert werden
 !crypt.pyc
